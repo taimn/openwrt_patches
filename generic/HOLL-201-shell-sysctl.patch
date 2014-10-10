@@ -1,0 +1,9 @@
+--- openwrt_holl/package/base-files/files/etc/init.d/sysctl	2014-08-20 11:35:52.712734428 +0800
++++ openwrt_holl.new/package/base-files/files/etc/init.d/sysctl	2014-08-08 16:49:36.019085686 +0800
+@@ -4,4 +4,6 @@
+ START=11
+ start() {
+ 	[ -f /etc/sysctl.conf ] && sysctl -p -e >&-
++	[ -f /sys/module/nf_conntrack/parameters/hashsize ] && echo 8192 > /sys/module/nf_conntrack/parameters/hashsize
++
+ }

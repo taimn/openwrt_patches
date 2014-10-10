@@ -1,0 +1,21 @@
+--- openwrt_holl/feeds/luci/contrib/package/luci-addons/holl-wifidog.mk	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/feeds/luci/contrib/package/luci-addons/holl-wifidog.mk	2014-08-20 11:06:31.750621897 +0800
+@@ -0,0 +1,18 @@
++define Package/luci-app-wifidog
++  SECTION:=luci
++  CATEGORY:=LuCI
++  SUBMENU:=3. Applications
++  TITLE:=LuCI Support for wifidog
++endef
++
++#define Package/luci-app-wifidog/conffiles
++#/etc/wifidog.conf
++#/etc/config/wifidog
++#endef
++
++#define Package/luci-app-wifidog/install
++	#$(CP) ./root/* $(1)/
++#endef
++
++
++$(eval $(call application,wifidog,LuCI Support for Wifidog Application,holl-portal))

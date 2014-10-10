@@ -1,0 +1,28 @@
+--- a/package/base-files/files/etc/group.orig	2014-08-22 14:21:19.490941691 +0800
++++ b/package/base-files/files/etc/group	2014-08-22 14:20:15.346942983 +0800
+@@ -1,4 +1,4 @@
+-root:x:0:
++root:x:0:admin
+ daemon:x:1:
+ adm:x:4:
+ mail:x:8:
+@@ -8,3 +8,4 @@
+ users:x:100:
+ network:x:101:
+ nogroup:x:65534:
++admin:x:500:
+--- a/package/base-files/files/etc/passwd.orig	2014-08-22 14:18:53.282944636 +0800
++++ b/package/base-files/files/etc/passwd	2014-08-22 14:19:00.702944486 +0800
+@@ -3,3 +3,4 @@
+ ftp:*:55:55:ftp:/home/ftp:/bin/false
+ network:*:101:101:network:/var:/bin/false
+ nobody:*:65534:65534:nobody:/var:/bin/false
++admin:x:500:500:admin:/var:/bin/false
+--- a/package/base-files/files/etc/shadow.orig	2014-08-22 14:21:32.074941437 +0800
++++ b/package/base-files/files/etc/shadow	2014-08-22 14:20:39.450942497 +0800
+@@ -1,4 +1,5 @@
+ root:$1$ZXgYxGf3$0JYLb.9ImGLu4B9UHNZ1l/:16304:0:99999:7:::
++admin:$1$dDYDcvrk$uCRZuUsKnXUn1ERgP68iG0:16304:0:99999:7:::
+ daemon:*:0:0:99999:7:::
+ ftp:*:0:0:99999:7:::
+ network:*:0:0:99999:7:::

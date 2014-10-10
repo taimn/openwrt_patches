@@ -1,0 +1,19 @@
+--- openwrt_holl/package/kernel/mac80211/files/lib/wifi/mac80211.sh	2014-08-20 11:35:51.660734449 +0800
++++ openwrt_holl.new/package/kernel/mac80211/files/lib/wifi/mac80211.sh	2014-08-08 18:33:41.578959889 +0800
+@@ -95,6 +95,7 @@
+ 			dev_id="	option macaddr	$(cat /sys/class/ieee80211/${dev}/macaddress)"
+ 		fi
+ 
++		ssid_suffix=`cat /sys/class/ieee80211/${dev}/macaddress | awk -F ":" '{print toupper($4$5$6)}'`
+ 		cat <<EOF
+ config wifi-device  radio$devidx
+ 	option type     mac80211
+@@ -109,7 +110,7 @@
+ 	option device   radio$devidx
+ 	option network  lan
+ 	option mode     ap
+-	option ssid     OpenWrt
++	option ssid     HOLL_${ssid_suffix:-123456}
+ 	option encryption none
+ 
+ EOF

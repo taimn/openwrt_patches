@@ -1,0 +1,22 @@
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/controller/admin/index.lua.orig	2014-08-22 14:26:22.662935584 +0800
++++ openwrt_holl/feeds/luci/modules/admin-full/luasrc/controller/admin/index.lua	2014-08-22 14:26:35.362935329 +0800
+@@ -25,7 +25,7 @@
+ 	page.target  = firstchild()
+ 	page.title   = _("Administration")
+ 	page.order   = 10
+-	page.sysauth = "root"
++	page.sysauth = "admin"
+ 	page.sysauth_authenticator = "htmlauth"
+ 	page.ucidata = true
+ 	page.index = true
+--- openwrt_test/feeds/luci/modules/base/luasrc/controller/admin/servicectl.lua.orig	2014-08-22 16:17:27.317972178 +0800
++++ openwrt_test/feeds/luci/modules/base/luasrc/controller/admin/servicectl.lua	2014-08-22 16:17:50.317971714 +0800
+@@ -15,7 +15,7 @@
+ module("luci.controller.admin.servicectl", package.seeall)
+ 
+ function index()
+-	entry({"servicectl"}, alias("servicectl", "status")).sysauth = "root"
++	entry({"servicectl"}, alias("servicectl", "status")).sysauth = "admin"
+ 	entry({"servicectl", "status"}, call("action_status")).leaf = true
+ 	entry({"servicectl", "restart"}, call("action_restart")).leaf = true
+ end

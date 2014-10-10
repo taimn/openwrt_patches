@@ -1,0 +1,18 @@
+--- openwrt_holl/package/base-files/files/etc/config/system	2014-08-20 11:35:52.720734427 +0800
++++ openwrt_holl.new/package/base-files/files/etc/config/system	2014-08-13 10:52:29.072459861 +0800
+@@ -1,11 +1,10 @@
+ config system
+-	option hostname	OpenWrt
++	option hostname	HOLL
+ 	option timezone	UTC
+ 
+ config timeserver ntp
+-	list server	0.openwrt.pool.ntp.org
+-	list server	1.openwrt.pool.ntp.org
+-	list server	2.openwrt.pool.ntp.org
+-	list server	3.openwrt.pool.ntp.org
++	list server	cn.pool.ntp.org
++	list server	time.windows.com
++	list server	time.nist.gov
+ 	option enabled 1
+ 	option enable_server 0

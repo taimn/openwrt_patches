@@ -1,0 +1,28 @@
+--- a/target/linux/ar71xx/base-files/etc/uci-defaults/0000_holl-001-version	2014-08-18 18:12:54.707407876 +0800
++++ b/target/linux/ar71xx/base-files/etc/uci-defaults/0000_holl-001-version	2014-08-23 11:48:38.903112784 +0800
+@@ -0,0 +1,25 @@
++#!/bin/sh
++
++. /lib/ar71xx.sh
++. /etc/openwrt_release
++unset DISTRIB_DESCRIPTION
++
++board=$(ar71xx_board_name)
++case "$board" in
++tl-wr841n-v8)
++        DISTRIB_DESCRIPTION="Bussiness Firmware V0.2";
++        ;;
++
++esac
++
++cat > /etc/openwrt_release <<EOF
++DISTRIB_ID='${DISTRIB_ID:-HOLL}'
++DISTRIB_RELEASE='${DISTRIB_RELEASE:-dog}'
++DISTRIB_REVISION='${DISTRIB_REVISION:-test}'
++DISTRIB_CODENAME='${DISTRIB_CODENAME:-dog mum}'
++DISTRIB_TARGET='${DISTRIB_TARGET:-ar71xx/hollrouter}'
++DISTRIB_DESCRIPTION='${DISTRIB_DESCRIPTION:-HOLL Firmware}'
++DISTRIB_TAINTS='${DISTRIB_TAINTS:-dog dad}'
++EOF
++
++exit 0

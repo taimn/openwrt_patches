@@ -1,0 +1,1518 @@
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/controller/admin/network.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/controller/admin/network.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/controller/admin/network.lua	2014-08-20 11:35:43.300734617 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/controller/admin/network.lua	2014-08-13 09:37:21.529598648 +0800
+@@ -21,28 +21,14 @@
+ 	page = node("admin", "network")
+ 	page.target = firstchild()
+ 	page.title  = _("Network")
+-	page.order  = 50
++	page.order  = 20
+ 	page.index  = true
+ 
+ --	if page.inreq then
+-		local has_switch = false
+-
+-		uci:foreach("network", "switch",
+-			function(s)
+-				has_switch = true
+-				return false
+-			end)
+-
+-		if has_switch then
+-			page  = node("admin", "network", "vlan")
+-			page.target = cbi("admin_network/vlan")
+-			page.title  = _("Switch")
+-			page.order  = 20
+-
+-			page = entry({"admin", "network", "switch_status"}, call("switch_status"), nil)
+-			page.leaf = true
+-		end
+ 
++		--if fs.access("/etc/config/wifidog") then
++			page = entry({"admin", "portalos"}, cbi("admin_network/portalos"), _("webportal"), 30)
++		--end
+ 
+ 		local has_wifi = false
+ 
+@@ -71,7 +57,7 @@
+ 			page = entry({"admin", "network", "wireless_shutdown"}, call("wifi_shutdown"), nil)
+ 			page.leaf = true
+ 
+-			page = entry({"admin", "network", "wireless"}, arcombine(template("admin_network/wifi_overview"), cbi("admin_network/wifi")), _("Wifi"), 15)
++			page = entry({"admin", "network","wireless"}, arcombine(template("admin_network/wifi_overview"), cbi("admin_network/wifi")), _("Wifi"), 15)
+ 			page.leaf = true
+ 			page.subindex = true
+ 
+@@ -108,6 +94,7 @@
+ 		page.leaf = true
+ 
+ 		page = entry({"admin", "network", "network"}, arcombine(cbi("admin_network/network"), cbi("admin_network/ifaces")), _("Interfaces"), 10)
++		--page = entry({"admin", "network", "network"}, cbi("admin_network/ifaces"), _("Interfaces"), 10)
+ 		page.leaf   = true
+ 		page.subindex = true
+ 
+@@ -121,47 +108,6 @@
+ 					end
+ 				end)
+ 		end
+-
+-
+-		if nixio.fs.access("/etc/config/dhcp") then
+-			page = node("admin", "network", "dhcp")
+-			page.target = cbi("admin_network/dhcp")
+-			page.title  = _("DHCP and DNS")
+-			page.order  = 30
+-
+-			page = entry({"admin", "network", "dhcplease_status"}, call("lease_status"), nil)
+-			page.leaf = true
+-
+-			page = node("admin", "network", "hosts")
+-			page.target = cbi("admin_network/hosts")
+-			page.title  = _("Hostnames")
+-			page.order  = 40
+-		end
+-
+-		page  = node("admin", "network", "routes")
+-		page.target = cbi("admin_network/routes")
+-		page.title  = _("Static Routes")
+-		page.order  = 50
+-
+-		page = node("admin", "network", "diagnostics")
+-		page.target = template("admin_network/diagnostics")
+-		page.title  = _("Diagnostics")
+-		page.order  = 60
+-
+-		page = entry({"admin", "network", "diag_ping"}, call("diag_ping"), nil)
+-		page.leaf = true
+-
+-		page = entry({"admin", "network", "diag_nslookup"}, call("diag_nslookup"), nil)
+-		page.leaf = true
+-
+-		page = entry({"admin", "network", "diag_traceroute"}, call("diag_traceroute"), nil)
+-		page.leaf = true
+-
+-		page = entry({"admin", "network", "diag_ping6"}, call("diag_ping6"), nil)
+-		page.leaf = true
+-
+-		page = entry({"admin", "network", "diag_traceroute6"}, call("diag_traceroute6"), nil)
+-		page.leaf = true
+ --	end
+ end
+ 
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/controller/admin/status.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/controller/admin/status.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/controller/admin/status.lua	2014-08-20 11:35:43.300734617 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/controller/admin/status.lua	2014-08-08 16:49:35.951085687 +0800
+@@ -16,39 +16,7 @@
+ module("luci.controller.admin.status", package.seeall)
+ 
+ function index()
+-	entry({"admin", "status"}, alias("admin", "status", "overview"), _("Status"), 20).index = true
+-	entry({"admin", "status", "overview"}, template("admin_status/index"), _("Overview"), 1)
+-	entry({"admin", "status", "iptables"}, call("action_iptables"), _("Firewall"), 2).leaf = true
+-	entry({"admin", "status", "routes"}, template("admin_status/routes"), _("Routes"), 3)
+-	entry({"admin", "status", "syslog"}, call("action_syslog"), _("System Log"), 4)
+-	entry({"admin", "status", "dmesg"}, call("action_dmesg"), _("Kernel Log"), 5)
+-	entry({"admin", "status", "processes"}, cbi("admin_status/processes"), _("Processes"), 6)
+-
+-	entry({"admin", "status", "realtime"}, alias("admin", "status", "realtime", "load"), _("Realtime Graphs"), 7)
+-
+-	entry({"admin", "status", "realtime", "load"}, template("admin_status/load"), _("Load"), 1).leaf = true
+-	entry({"admin", "status", "realtime", "load_status"}, call("action_load")).leaf = true
+-
+-	entry({"admin", "status", "realtime", "bandwidth"}, template("admin_status/bandwidth"), _("Traffic"), 2).leaf = true
+-	entry({"admin", "status", "realtime", "bandwidth_status"}, call("action_bandwidth")).leaf = true
+-
+-	entry({"admin", "status", "realtime", "wireless"}, template("admin_status/wireless"), _("Wireless"), 3).leaf = true
+-	entry({"admin", "status", "realtime", "wireless_status"}, call("action_wireless")).leaf = true
+-
+-	entry({"admin", "status", "realtime", "connections"}, template("admin_status/connections"), _("Connections"), 4).leaf = true
+-	entry({"admin", "status", "realtime", "connections_status"}, call("action_connections")).leaf = true
+-
+-	entry({"admin", "status", "nameinfo"}, call("action_nameinfo")).leaf = true
+-end
+-
+-function action_syslog()
+-	local syslog = luci.sys.syslog()
+-	luci.template.render("admin_status/syslog", {syslog=syslog})
+-end
+-
+-function action_dmesg()
+-	local dmesg = luci.sys.dmesg()
+-	luci.template.render("admin_status/dmesg", {dmesg=dmesg})
++	entry({"admin", "status"}, template("admin_status/index"), _("Overview"), 1)
+ end
+ 
+ function action_iptables()
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/controller/admin/system.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/controller/admin/system.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/controller/admin/system.lua	2014-08-20 11:35:43.300734617 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/controller/admin/system.lua	2014-08-08 16:49:35.951085687 +0800
+@@ -22,26 +22,13 @@
+ 
+ 	entry({"admin", "system", "admin"}, cbi("admin_system/admin"), _("Administration"), 2)
+ 
+-	if nixio.fs.access("/bin/opkg") then
+-		entry({"admin", "system", "packages"}, call("action_packages"), _("Software"), 10)
+-		entry({"admin", "system", "packages", "ipkg"}, form("admin_system/ipkg"))
+-	end
+-
+-	entry({"admin", "system", "startup"}, form("admin_system/startup"), _("Startup"), 45)
+-	entry({"admin", "system", "crontab"}, form("admin_system/crontab"), _("Scheduled Tasks"), 46)
+-
+ 	if nixio.fs.access("/etc/config/fstab") then
+ 		entry({"admin", "system", "fstab"}, cbi("admin_system/fstab"), _("Mount Points"), 50)
+ 		entry({"admin", "system", "fstab", "mount"}, cbi("admin_system/fstab/mount"), nil).leaf = true
+ 		entry({"admin", "system", "fstab", "swap"},  cbi("admin_system/fstab/swap"),  nil).leaf = true
+ 	end
+ 
+-	if nixio.fs.access("/sys/class/leds") then
+-		entry({"admin", "system", "leds"}, cbi("admin_system/leds"), _("<abbr title=\"Light Emitting Diode\">LED</abbr> Configuration"), 60)
+-	end
+-
+ 	entry({"admin", "system", "flashops"}, call("action_flashops"), _("Backup / Flash Firmware"), 70)
+-	entry({"admin", "system", "flashops", "backupfiles"}, form("admin_system/backupfiles"))
+ 
+ 	entry({"admin", "system", "reboot"}, call("action_reboot"), _("Reboot"), 90)
+ end
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/ifaces.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/ifaces.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/ifaces.lua	2014-08-20 11:35:43.288734617 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/ifaces.lua	2014-08-13 10:44:55.345516996 +0800
+@@ -24,7 +24,7 @@
+ local has_dnsmasq  = fs.access("/etc/config/dhcp")
+ local has_firewall = fs.access("/etc/config/firewall")
+ 
+-m = Map("network", translate("Interfaces") .. " - " .. arg[1]:upper(), translate("On this page you can configure the network interfaces. You can bridge several interfaces by ticking the \"bridge interfaces\" field and enter the names of several network interfaces separated by spaces. You can also use <abbr title=\"Virtual Local Area Network\">VLAN</abbr> notation <samp>INTERFACE.VLANNR</samp> (<abbr title=\"for example\">e.g.</abbr>: <samp>eth0.1</samp>)."))
++m = Map("network", translate("Interfaces") .. " - " .. arg[1]:upper(), nil)
+ m:chain("wireless")
+ 
+ if has_firewall then
+@@ -159,39 +159,13 @@
+ 
+ local ifc = net:get_interface()
+ 
+-s = m:section(NamedSection, arg[1], "interface", translate("Common Configuration"))
++s = m:section(NamedSection, arg[1], "interface", nil)
+ s.addremove = false
+ 
+ s:tab("general",  translate("General Setup"))
+-s:tab("advanced", translate("Advanced Settings"))
+-s:tab("physical", translate("Physical Settings"))
+-
+-if has_firewall then
+-	s:tab("firewall", translate("Firewall Settings"))
+-end
+-
+-
+-st = s:taboption("general", DummyValue, "__status", translate("Status"))
+-
+-local function set_status()
+-	-- if current network is empty, print a warning
+-	if not net:is_floating() and net:is_empty() then
+-		st.template = "cbi/dvalue"
+-		st.network  = nil
+-		st.value    = translate("There is no device assigned yet, please attach a network device in the \"Physical Settings\" tab")
+-	else
+-		st.template = "admin_network/iface_status"
+-		st.network  = arg[1]
+-		st.value    = nil
+-	end
+-end
+-
+-m.on_init = set_status
+-m.on_after_save = set_status
+-
+ 
+ p = s:taboption("general", ListValue, "proto", translate("Protocol"))
+-p.default = net:proto()
++p.default = net:proto() 
+ 
+ 
+ if not net:is_installed() then
+@@ -217,130 +191,15 @@
+ 
+ local _, pr
+ for _, pr in ipairs(nw:get_protocols()) do
+-	p:value(pr:proto(), pr:get_i18n())
+-	if pr:proto() ~= net:proto() then
+-		p_switch:depends("proto", pr:proto())
+-	end
+-end
+-
+-
+-auto = s:taboption("advanced", Flag, "auto", translate("Bring up on boot"))
+-auto.default = (net:proto() == "none") and auto.disabled or auto.enabled
+-
+-delegate = s:taboption("advanced", Flag, "delegate", translate("Use builtin IPv6-management"))
+-delegate.default = delegate.enabled
+-
+-
+-if not net:is_virtual() then
+-	br = s:taboption("physical", Flag, "type", translate("Bridge interfaces"), translate("creates a bridge over specified interface(s)"))
+-	br.enabled = "bridge"
+-	br.rmempty = true
+-	br:depends("proto", "static")
+-	br:depends("proto", "dhcp")
+-	br:depends("proto", "none")
+-
+-	stp = s:taboption("physical", Flag, "stp", translate("Enable <abbr title=\"Spanning Tree Protocol\">STP</abbr>"),
+-		translate("Enables the Spanning Tree Protocol on this bridge"))
+-	stp:depends("type", "bridge")
+-	stp.rmempty = true
+-end
+-
+-
+-if not net:is_floating() then
+-	ifname_single = s:taboption("physical", Value, "ifname_single", translate("Interface"))
+-	ifname_single.template = "cbi/network_ifacelist"
+-	ifname_single.widget = "radio"
+-	ifname_single.nobridges = true
+-	ifname_single.rmempty = false
+-	ifname_single.network = arg[1]
+-	ifname_single:depends("type", "")
+-
+-	function ifname_single.cfgvalue(self, s)
+-		-- let the template figure out the related ifaces through the network model
+-		return nil
+-	end
+-
+-	function ifname_single.write(self, s, val)
+-		local i
+-		local new_ifs = { }
+-		local old_ifs = { }
+-
+-		for _, i in ipairs(net:get_interfaces() or { net:get_interface() }) do
+-			old_ifs[#old_ifs+1] = i:name()
+-		end
+-
+-		for i in ut.imatch(val) do
+-			new_ifs[#new_ifs+1] = i
+-
+-			-- if this is not a bridge, only assign first interface
+-			if self.option == "ifname_single" then
+-				break
+-			end
+-		end
+-
+-		table.sort(old_ifs)
+-		table.sort(new_ifs)
+-
+-		for i = 1, math.max(#old_ifs, #new_ifs) do
+-			if old_ifs[i] ~= new_ifs[i] then
+-				backup_ifnames()
+-				for i = 1, #old_ifs do
+-					net:del_interface(old_ifs[i])
+-				end
+-				for i = 1, #new_ifs do
+-					net:add_interface(new_ifs[i])
+-				end
+-				break
+-			end
++	if pr:proto() == "dhcp" or pr:proto() == "pppoe" or pr:proto() == "static" then
++		if arg[1]:upper() == "WAN" then
++			p:value(pr:proto(), pr:get_i18n())
++		elseif pr:proto() == "static" and arg[1]:upper() == "LAN" then
++			p:value(pr:proto(), pr:get_i18n())
+ 		end
+ 	end
+-end
+-
+-
+-if not net:is_virtual() then
+-	ifname_multi = s:taboption("physical", Value, "ifname_multi", translate("Interface"))
+-	ifname_multi.template = "cbi/network_ifacelist"
+-	ifname_multi.nobridges = true
+-	ifname_multi.rmempty = false
+-	ifname_multi.network = arg[1]
+-	ifname_multi.widget = "checkbox"
+-	ifname_multi:depends("type", "bridge")
+-	ifname_multi.cfgvalue = ifname_single.cfgvalue
+-	ifname_multi.write = ifname_single.write
+-end
+-
+-
+-if has_firewall then
+-	fwzone = s:taboption("firewall", Value, "_fwzone",
+-		translate("Create / Assign firewall-zone"),
+-		translate("Choose the firewall zone you want to assign to this interface. Select <em>unspecified</em> to remove the interface from the associated zone or fill out the <em>create</em> field to define a new zone and attach the interface to it."))
+-
+-	fwzone.template = "cbi/firewall_zonelist"
+-	fwzone.network = arg[1]
+-	fwzone.rmempty = false
+-
+-	function fwzone.cfgvalue(self, section)
+-		self.iface = section
+-		local z = fw:get_zone_by_network(section)
+-		return z and z:name()
+-	end
+-
+-	function fwzone.write(self, section, value)
+-		local zone = fw:get_zone(value)
+-
+-		if not zone and value == '-' then
+-			value = m:formvalue(self:cbid(section) .. ".newzone")
+-			if value and #value > 0 then
+-				zone = fw:add_zone(value)
+-			else
+-				fw:del_network(section)
+-			end
+-		end
+-
+-		if zone then
+-			fw:del_network(section)
+-			zone:add_network(section)
+-		end
++	if pr:proto() ~= net:proto() then
++		p_switch:depends("proto", pr:proto())
+ 	end
+ end
+ 
+@@ -361,7 +220,7 @@
+ 		end
+ 	end
+ 	return value
+-end
++end 
+ 
+ 
+ local form, ferr = loadfile(
+@@ -425,8 +284,6 @@
+ 		s.addremove = false
+ 		s.anonymous = true
+ 		s:tab("general",  translate("General Setup"))
+-		s:tab("advanced", translate("Advanced Settings"))
+-		s:tab("ipv6", translate("IPv6 Settings"))
+ 
+ 		function s.filter(self, section)
+ 			return m2.uci:get("dhcp", section, "interface") == arg[1]
+@@ -453,71 +310,6 @@
+ 			translate("Expiry time of leased addresses, minimum is 2 minutes (<code>2m</code>)."))
+ 		ltime.rmempty = true
+ 		ltime.default = "12h"
+-
+-		local dd = s:taboption("advanced", Flag, "dynamicdhcp",
+-			translate("Dynamic <abbr title=\"Dynamic Host Configuration Protocol\">DHCP</abbr>"),
+-			translate("Dynamically allocate DHCP addresses for clients. If disabled, only " ..
+-				"clients having static leases will be served."))
+-		dd.default = dd.enabled
+-
+-		s:taboption("advanced", Flag, "force", translate("Force"),
+-			translate("Force DHCP on this network even if another server is detected."))
+-
+-		-- XXX: is this actually useful?
+-		--s:taboption("advanced", Value, "name", translate("Name"),
+-		--	translate("Define a name for this network."))
+-
+-		mask = s:taboption("advanced", Value, "netmask",
+-			translate("<abbr title=\"Internet Protocol Version 4\">IPv4</abbr>-Netmask"),
+-			translate("Override the netmask sent to clients. Normally it is calculated " ..
+-				"from the subnet that is served."))
+-
+-		mask.optional = true
+-		mask.datatype = "ip4addr"
+-
+-		s:taboption("advanced", DynamicList, "dhcp_option", translate("DHCP-Options"),
+-			translate("Define additional DHCP options, for example \"<code>6,192.168.2.1," ..
+-				"192.168.2.2</code>\" which advertises different DNS servers to clients."))
+-
+-		for i, n in ipairs(s.children) do
+-			if n ~= ignore then
+-				n:depends("ignore", "")
+-			end
+-		end
+-
+-		o = s:taboption("ipv6", ListValue, "ra", translate("Router Advertisement-Service"))
+-		o:value("", translate("disabled"))
+-		o:value("server", translate("server mode"))
+-		o:value("relay", translate("relay mode"))
+-		o:value("hybrid", translate("hybrid mode"))
+-
+-		o = s:taboption("ipv6", ListValue, "dhcpv6", translate("DHCPv6-Service"))
+-		o:value("", translate("disabled"))
+-		o:value("server", translate("server mode"))
+-		o:value("relay", translate("relay mode"))
+-		o:value("hybrid", translate("hybrid mode"))
+-
+-		o = s:taboption("ipv6", ListValue, "ndp", translate("NDP-Proxy"))
+-		o:value("", translate("disabled"))
+-		o:value("relay", translate("relay mode"))
+-		o:value("hybrid", translate("hybrid mode"))
+-
+-		o = s:taboption("ipv6", ListValue, "ra_management", translate("DHCPv6-Mode"))
+-		o:value("", translate("stateless"))
+-		o:value("1", translate("stateless + stateful"))
+-		o:value("2", translate("stateful-only"))
+-		o:depends("dhcpv6", "server")
+-		o:depends("dhcpv6", "hybrid")
+-		o.default = "1"
+-
+-		o = s:taboption("ipv6", Flag, "ra_default", translate("Always announce default router"),
+-		        translate("Announce as default router even if no public prefix is available."))
+-		o:depends("ra", "server")
+-		o:depends("ra", "hybrid")
+-
+-		s:taboption("ipv6", DynamicList, "dns", translate("Announced DNS servers"))
+-		s:taboption("ipv6", DynamicList, "domain", translate("Announced DNS domains"))
+-
+ 	else
+ 		m2 = nil
+ 	end
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/network.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/network.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/network.lua	2014-08-20 11:35:43.288734617 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/network.lua	2014-08-08 16:49:35.931085688 +0800
+@@ -15,7 +15,8 @@
+ 
+ local fs = require "nixio.fs"
+ 
+-m = Map("network", translate("Interfaces"))
++--m = Map("network", translate("Interfaces"))
++m = Map("network", nil)
+ m.pageaction = false
+ m:section(SimpleSection).template = "admin_network/iface_overview"
+ 
+@@ -69,14 +70,5 @@
+ 	m.pageaction = true
+ end
+ 
+-local network = require "luci.model.network"
+-if network:has_ipv6() then
+-	local s = m:section(NamedSection, "globals", "globals", translate("Global network options"))
+-	local o = s:option(Value, "ula_prefix", translate("IPv6 ULA-Prefix"))
+-	o.datatype = "ip6addr"
+-	o.rmempty = true
+-	m.pageaction = true
+-end
+-
+ 
+ return m
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/portalos.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/portalos.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/portalos.lua	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/portalos.lua	2014-08-13 09:35:32.077600852 +0800
+@@ -0,0 +1,35 @@
++require("luci.sys")
++
++m2 = Map("portalos", nil, nil)
++
++s = m2:section(TypedSection, "portalos", translate("webportal"))
++s.anonymous = true
++s.addremove = false
++
++pa = s:option(Flag, "enable", translate("enable webportal"), nil)                                    
++                                                                   
++pa.enabled  = "on"                                                 
++pa.disabled = "off"                                                
++pa.default  = pa.enabled                                           
++pa.rmempty  = false
++
++
++pt = s:option(Value, "gw_id", translate("gw_id"),
++        translate("gw_idMSG"))
++
++--pt.datatype = "hostname"
++pt.default  = "gw_id"
++
++ph = s:option(Value, "mcode", translate("mcode"),
++        translate("mcodeMSG"))
++
++--ph.datatype = "hostname"
++ph.default  = "mcode"
++
++local apply = luci.http.formvalue("cbi.apply")
++if apply then
++    io.popen("/etc/init.d/portalos restart")
++end
++
++return m2
++
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_dhcp.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_dhcp.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_dhcp.lua	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_dhcp.lua	2014-08-08 16:49:35.931085688 +0800
+@@ -0,0 +1,76 @@
++--[[
++LuCI - Lua Configuration Interface
++
++Copyright 2011-2012 Jo-Philipp Wich <xm@subsignal.org>
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++	http://www.apache.org/licenses/LICENSE-2.0
++]]--
++
++local map, section, net = ...
++local ifc = net:get_interface()
++
++local hostname, accept_ra, send_rs
++local bcast, defaultroute, peerdns, dns, metric, clientid, vendorclass
++
++
++hostname = section:taboption("general", Value, "hostname",
++	translate("Hostname to send when requesting DHCP"))
++
++hostname.placeholder = luci.sys.hostname()
++hostname.datatype    = "hostname"
++
++
++--[[bcast = section:taboption("advanced", Flag, "broadcast",
++	translate("Use broadcast flag"),
++	translate("Required for certain ISPs, e.g. Charter with DOCSIS 3"))
++
++bcast.default = bcast.disabled
++
++
++defaultroute = section:taboption("advanced", Flag, "defaultroute",
++	translate("Use default gateway"),
++	translate("If unchecked, no default route is configured"))
++
++defaultroute.default = defaultroute.enabled
++
++
++peerdns = section:taboption("advanced", Flag, "peerdns",
++	translate("Use DNS servers advertised by peer"),
++	translate("If unchecked, the advertised DNS server addresses are ignored"))
++
++peerdns.default = peerdns.enabled
++
++
++dns = section:taboption("advanced", DynamicList, "dns",
++	translate("Use custom DNS servers"))
++
++dns:depends("peerdns", "")
++dns.datatype = "ipaddr"
++dns.cast     = "string"
++
++
++metric = section:taboption("advanced", Value, "metric",
++	translate("Use gateway metric"))
++
++metric.placeholder = "0"
++metric.datatype    = "uinteger"
++
++
++clientid = section:taboption("advanced", Value, "clientid",
++	translate("Client ID to send when requesting DHCP"))
++
++
++vendorclass = section:taboption("advanced", Value, "vendorid",
++	translate("Vendor Class to send when requesting DHCP"))
++
++
++luci.tools.proto.opt_macaddr(section, ifc, translate("Override MAC address"))
++
++
++mtu = section:taboption("advanced", Value, "mtu", translate("Override MTU"))
++mtu.placeholder = "1500"
++mtu.datatype    = "max(9200)"]]--
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_l2tp.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_l2tp.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_l2tp.lua	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_l2tp.lua	2014-08-12 15:00:57.246881234 +0800
+@@ -0,0 +1,28 @@
++--[[
++LuCI - Lua Configuration Interface
++
++Copyright 2011 Jo-Philipp Wich <xm@subsignal.org>
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++	http://www.apache.org/licenses/LICENSE-2.0
++]]--
++
++local map, section, net = ...
++
++local server, username, password
++local ipv6, defaultroute, metric, peerdns, dns, mtu
++
++
++server = section:taboption("general", Value, "server", translate("L2TP Server"))
++server.datatype = "host"
++
++
++username = section:taboption("general", Value, "username", translate("PAP/CHAP username"))
++
++
++password = section:taboption("general", Value, "password", translate("PAP/CHAP password"))
++password.password = true
++
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_pppoa.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_pppoa.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_pppoa.lua	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_pppoa.lua	2014-08-12 15:00:57.246881234 +0800
+@@ -0,0 +1,46 @@
++--[[
++LuCI - Lua Configuration Interface
++
++Copyright 2011 Jo-Philipp Wich <xm@subsignal.org>
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++	http://www.apache.org/licenses/LICENSE-2.0
++]]--
++
++local map, section, net = ...
++
++local encaps, atmdev, vci, vpi, username, password
++local ipv6, defaultroute, metric, peerdns, dns,
++      keepalive_failure, keepalive_interval, demand, mtu
++
++
++encaps = section:taboption("general", ListValue, "encaps", translate("PPPoA Encapsulation"))
++encaps:value("vc", "VC-Mux")
++encaps:value("llc", "LLC")
++
++
++atmdev = section:taboption("general", Value, "atmdev", translate("ATM device number"))
++atmdev.default  = "0"
++atmdev.datatype = "uinteger"
++
++
++vci = section:taboption("general", Value, "vci", translate("ATM Virtual Channel Identifier (VCI)"))
++vci.default  = "35"
++vci.datatype = "uinteger"
++
++
++vpi = section:taboption("general", Value, "vpi", translate("ATM Virtual Path Identifier (VPI)"))
++vpi.default  = "8"
++vpi.datatype = "uinteger"
++
++
++username = section:taboption("general", Value, "username", translate("PAP/CHAP username"))
++
++
++password = section:taboption("general", Value, "password", translate("PAP/CHAP password"))
++password.password = true
++
++
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_pppoe.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_pppoe.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_pppoe.lua	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_pppoe.lua	2014-08-12 15:00:57.266881233 +0800
+@@ -0,0 +1,39 @@
++--[[
++LuCI - Lua Configuration Interface
++
++Copyright 2011 Jo-Philipp Wich <xm@subsignal.org>
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++	http://www.apache.org/licenses/LICENSE-2.0
++]]--
++
++local map, section, net = ...
++
++local username, password, ac, service
++local ipv6, defaultroute, metric, peerdns, dns,
++      keepalive_failure, keepalive_interval, demand, mtu
++
++
++username = section:taboption("general", Value, "username", translate("PAP/CHAP username"))
++
++
++password = section:taboption("general", Value, "password", translate("PAP/CHAP password"))
++password.password = true
++
++
++ac = section:taboption("general", Value, "ac",
++	translate("Access Concentrator"),
++	translate("Leave empty to autodetect"))
++
++ac.placeholder = translate("auto")
++
++
++service = section:taboption("general", Value, "service",
++	translate("Service Name"),
++	translate("Leave empty to autodetect"))
++
++service.placeholder = translate("auto")
++
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_pptp.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_pptp.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_pptp.lua	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_pptp.lua	2014-08-12 15:00:57.266881233 +0800
+@@ -0,0 +1,29 @@
++--[[
++LuCI - Lua Configuration Interface
++
++Copyright 2011-2012 Jo-Philipp Wich <xm@subsignal.org>
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++	http://www.apache.org/licenses/LICENSE-2.0
++]]--
++
++local map, section, net = ...
++
++local server, username, password
++local defaultroute, metric, peerdns, dns,
++	keepalive_failure, keepalive_interval, demand, mtu
++
++
++server = section:taboption("general", Value, "server", translate("VPN Server"))
++server.datatype = "host"
++
++
++username = section:taboption("general", Value, "username", translate("PAP/CHAP username"))
++
++
++password = section:taboption("general", Value, "password", translate("PAP/CHAP password"))
++password.password = true
++
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_static.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_static.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_static.lua	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/proto_static.lua	2014-08-08 16:49:35.935085688 +0800
+@@ -0,0 +1,90 @@
++--[[
++LuCI - Lua Configuration Interface
++
++Copyright 2011 Jo-Philipp Wich <xm@subsignal.org>
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++	http://www.apache.org/licenses/LICENSE-2.0
++]]--
++
++local map, section, net = ...
++local ifc = net:get_interface()
++
++local ipaddr, netmask, gateway, broadcast, dns, accept_ra, send_rs, ip6addr, ip6gw
++local mtu, metric
++
++
++ipaddr = section:taboption("general", Value, "ipaddr", translate("IPv4 address"))
++ipaddr.datatype = "ip4addr"
++
++
++netmask = section:taboption("general", Value, "netmask",
++	translate("IPv4 netmask"))
++
++netmask.datatype = "ip4addr"
++netmask:value("255.255.255.0")
++netmask:value("255.255.0.0")
++netmask:value("255.0.0.0")
++
++
++gateway = section:taboption("general", Value, "gateway", translate("IPv4 gateway"))
++gateway.datatype = "ip4addr"
++
++
++broadcast = section:taboption("general", Value, "broadcast", translate("IPv4 broadcast"))
++broadcast.datatype = "ip4addr"
++
++
++dns = section:taboption("general", DynamicList, "dns",
++	translate("Use custom DNS servers"))
++
++dns.datatype = "ipaddr"
++dns.cast     = "string"
++
++
++if luci.model.network:has_ipv6() then
++
++	local ip6assign = section:taboption("general", Value, "ip6assign", translate("IPv6 assignment length"),
++		translate("Assign a part of given length of every public IPv6-prefix to this interface"))
++	ip6assign:value("", translate("disabled"))
++	ip6assign:value("64")
++	ip6assign.datatype = "max(64)"
++
++	local ip6hint = section:taboption("general", Value, "ip6hint", translate("IPv6 assignment hint"),
++		translate("Assign prefix parts using this hexadecimal subprefix ID for this interface."))
++	for i=33,64 do ip6hint:depends("ip6assign", i) end
++
++	ip6addr = section:taboption("general", Value, "ip6addr", translate("IPv6 address"))
++	ip6addr.datatype = "ip6addr"
++	ip6addr:depends("ip6assign", "")
++
++
++	ip6gw = section:taboption("general", Value, "ip6gw", translate("IPv6 gateway"))
++	ip6gw.datatype = "ip6addr"
++	ip6gw:depends("ip6assign", "")
++
++
++	local ip6prefix = s:taboption("general", Value, "ip6prefix", translate("IPv6 routed prefix"),
++		translate("Public prefix routed to this device for distribution to clients."))
++	ip6prefix.datatype = "ip6addr"
++	ip6prefix:depends("ip6assign", "")
++
++end
++
++
++--[[luci.tools.proto.opt_macaddr(section, ifc, translate("Override MAC address"))
++
++
++mtu = section:taboption("advanced", Value, "mtu", translate("Override MTU"))
++mtu.placeholder = "1500"
++mtu.datatype    = "max(9200)"
++
++
++metric = section:taboption("advanced", Value, "metric",
++	translate("Use gateway metric"))
++
++metric.placeholder = "0"
++metric.datatype    = "uinteger" ]]--
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/wifidog.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/wifidog.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/wifidog.lua	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/wifidog.lua	2014-08-11 20:58:46.766845511 +0800
+@@ -0,0 +1,35 @@
++require("luci.sys")
++
++m2 = Map("wifidog", nil, nil)
++
++s = m2:section(TypedSection, "wifidog", translate("webportal"))
++s.anonymous = true
++s.addremove = false
++
++pa = s:option(Flag, "enable", translate("enable webportal"), nil)                                    
++                                                                   
++pa.enabled  = "on"                                                 
++pa.disabled = "off"                                                
++pa.default  = pa.enabled                                           
++pa.rmempty  = false
++
++
++pt = s:option(Value, "gw_id", translate("gw_id"),
++        translate("gw_idMSG"))
++
++--pt.datatype = "hostname"
++pt.default  = "gw_id"
++
++ph = s:option(Value, "mcode", translate("mcode"),
++        translate("mcodeMSG"))
++
++--ph.datatype = "hostname"
++ph.default  = "mcode"
++
++local apply = luci.http.formvalue("cbi.apply")
++if apply then
++    io.popen("/etc/init.d/wifidog restart")
++end
++
++return m2
++
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/wifi.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/wifi.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/wifi.lua	2014-08-20 11:35:43.288734617 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_network/wifi.lua	2014-08-15 19:02:50.240176197 +0800
+@@ -20,12 +20,7 @@
+
+ arg[1] = arg[1] or ""
+
+-m = Map("wireless", "",
+-	translate("The <em>Device Configuration</em> section covers physical settings of the radio " ..
+-		"hardware such as channel, transmit power or antenna selection which are shared among all " ..
+-		"defined wireless networks (if the radio hardware is multi-SSID capable). Per network settings " ..
+-		"like encryption or operation mode are grouped in the <em>Interface Configuration</em>."))
+-
++m = Map("wireless", "", nil)
+ m:chain("network")
+ m:chain("firewall")
+
+@@ -112,22 +108,11 @@
+ local tx_power_list = txpower_list(iw)
+ local tx_power_cur  = txpower_current(wdev:get("txpower"), tx_power_list)
+ 
+-s = m:section(NamedSection, wdev:name(), "wifi-device", translate("Device Configuration"))
++--s = m:section(NamedSection, wdev:name(), "wifi-device", translate("Device Configuration"))
++s = m:section(NamedSection, wdev:name(), "wifi-device", nil)
+ s.addremove = false
+ 
+ s:tab("general", translate("General Setup"))
+-s:tab("macfilter", translate("MAC-Filter"))
+-s:tab("advanced", translate("Advanced Settings"))
+-
+---[[
+-back = s:option(DummyValue, "_overview", translate("Overview"))
+-back.value = ""
+-back.titleref = luci.dispatcher.build_url("admin", "network", "wireless")
+-]]
+-
+-st = s:taboption("general", DummyValue, "__status", translate("Status"))
+-st.template = "admin_network/wifi_status"
+-st.ifname   = arg[1]
+ 
+ en = s:taboption("general", Button, "__toggle")
+ 
+@@ -189,65 +174,6 @@
+ 				%{ p.display_dbm, p.display_mw })
+ 		end
+ 	end
+-
+-	mode = s:taboption("advanced", ListValue, "hwmode", translate("Band"))
+-
+-	if hw_modes.n then
+-		if hw_modes.g then mode:value("11g", "2.4GHz (802.11g+n)") end
+-		if hw_modes.a then mode:value("11a", "5GHz (802.11a+n)") end
+-
+-		htmode = s:taboption("advanced", ListValue, "htmode", translate("HT mode (802.11n)"))
+-		htmode:value("", translate("disabled"))
+-		htmode:value("HT20", "20MHz")
+-		htmode:value("HT40", "40MHz")
+-
+-		function mode.cfgvalue(...)
+-			local v = Value.cfgvalue(...)
+-			if v == "11na" then
+-				return "11a"
+-			elseif v == "11ng" then
+-				return "11g"
+-			end
+-			return v
+-		end
+-
+-		noscan = s:taboption("advanced", Flag, "noscan", translate("Force 40MHz mode"),
+-			translate("Always use 40MHz channels even if the secondary channel overlaps. Using this option does not comply with IEEE 802.11n-2009!"))
+-		noscan:depends("htmode", "HT40")
+-		noscan.default = noscan.disabled
+-	else
+-		if hw_modes.g then mode:value("11g", "2.4GHz (802.11g)") end
+-		if hw_modes.a then mode:value("11a", "5GHz (802.11a)") end
+-	end
+-
+-	local cl = iw and iw.countrylist
+-	if cl and #cl > 0 then
+-		cc = s:taboption("advanced", ListValue, "country", translate("Country Code"), translate("Use ISO/IEC 3166 alpha2 country codes."))
+-		cc.default = tostring(iw and iw.country or "00")
+-		for _, c in ipairs(cl) do
+-			cc:value(c.alpha2, "%s - %s" %{ c.alpha2, c.name })
+-		end
+-	else
+-		s:taboption("advanced", Value, "country", translate("Country Code"), translate("Use ISO/IEC 3166 alpha2 country codes."))
+-	end
+-
+-	s:taboption("advanced", Value, "distance", translate("Distance Optimization"),
+-		translate("Distance to farthest network member in meters."))
+-
+-	-- external antenna profiles
+-	local eal = iw and iw.extant
+-	if eal and #eal > 0 then
+-		ea = s:taboption("advanced", ListValue, "extant", translate("Antenna Configuration"))
+-		for _, eap in ipairs(eal) do
+-			ea:value(eap.id, "%s (%s)" %{ eap.name, eap.description })
+-			if eap.selected then
+-				ea.default = eap.id
+-			end
+-		end
+-	end
+-
+-	s:taboption("advanced", Value, "frag", translate("Fragmentation Threshold"))
+-	s:taboption("advanced", Value, "rts", translate("RTS/CTS Threshold"))
+ end
+ 
+ 
+@@ -388,17 +314,17 @@
+ s.defaults.device = wdev:name()
+ 
+ s:tab("general", translate("General Setup"))
+-s:tab("encryption", translate("Wireless Security"))
+-s:tab("macfilter", translate("MAC-Filter"))
+-s:tab("advanced", translate("Advanced Settings"))
++--s:tab("encryption", translate("Wireless Security"))
++--s:tab("macfilter", translate("MAC-Filter"))
++--s:tab("advanced", translate("Advanced Settings"))
+ 
+ s:taboption("general", Value, "ssid", translate("<abbr title=\"Extended Service Set Identifier\">ESSID</abbr>"))
+ 
+ mode = s:taboption("general", ListValue, "mode", translate("Mode"))
+ mode.override_values = true
+ mode:value("ap", translate("Access Point"))
+-mode:value("sta", translate("Client"))
+-mode:value("adhoc", translate("Ad-Hoc"))
++--mode:value("sta", translate("Client"))
++--mode:value("adhoc", translate("Ad-Hoc"))
+ 
+ bssid = s:taboption("general", Value, "bssid", translate("<abbr title=\"Basic Service Set Identifier\">BSSID</abbr>"))
+ 
+@@ -445,30 +371,17 @@
+ 
+ if hwtype == "mac80211" then
+ 	if fs.access("/usr/sbin/iw") then
+-		mode:value("mesh", "802.11s")
++		--mode:value("mesh", "802.11s")
+ 	end
+ 
+-	mode:value("ahdemo", translate("Pseudo Ad-Hoc (ahdemo)"))
+-	mode:value("monitor", translate("Monitor"))
++	--mode:value("ahdemo", translate("Pseudo Ad-Hoc (ahdemo)"))
++	--mode:value("monitor", translate("Monitor"))
+ 	bssid:depends({mode="adhoc"})
+ 	bssid:depends({mode="sta"})
+ 	bssid:depends({mode="sta-wds"})
+ 
+-	mp = s:taboption("macfilter", ListValue, "macfilter", translate("MAC-Address Filter"))
+-	mp:depends({mode="ap"})
+-	mp:depends({mode="ap-wds"})
+-	mp:value("", translate("disable"))
+-	mp:value("allow", translate("Allow listed only"))
+-	mp:value("deny", translate("Allow all except listed"))
+-
+-	ml = s:taboption("macfilter", DynamicList, "maclist", translate("MAC-List"))
+-	ml.datatype = "macaddr"
+-	ml:depends({macfilter="allow"})
+-	ml:depends({macfilter="deny"})
+-	nt.mac_hints(function(mac, name) ml:value(mac, "%s (%s)" %{ mac, name }) end)
+-
+-	mode:value("ap-wds", "%s (%s)" % {translate("Access Point"), translate("WDS")})
+-	mode:value("sta-wds", "%s (%s)" % {translate("Client"), translate("WDS")})
++	--mode:value("ap-wds", "%s (%s)" % {translate("Access Point"), translate("WDS")})
++	--mode:value("sta-wds", "%s (%s)" % {translate("Client"), translate("WDS")})
+ 
+ 	function mode.write(self, section, value)
+ 		if value == "ap-wds" then
+@@ -654,6 +567,14 @@
+ 
+ ------------------- WiFI-Encryption -------------------
+ 
++s = m:section(NamedSection, wnet.sid, "wifi-iface", translate("wifiencrypt"))
++ifsection = s
++s.addremove = false
++s.anonymous = true
++s.defaults.device = wdev:name()
++
++s:tab("encryption", translate("Wireless Security"))
++
+ encr = s:taboption("encryption", ListValue, "encryption", translate("Encryption"))
+ encr.override_values = true
+ encr.override_depends = true
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_system/admin.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_system/admin.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_system/admin.lua	2014-08-20 11:35:43.296734617 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_system/admin.lua	2014-08-08 16:49:35.951085687 +0800
+@@ -15,8 +15,7 @@
+ 
+ local fs = require "nixio.fs"
+ 
+-m = Map("system", translate("Router Password"),
+-	translate("Changes the administrator password for accessing the device"))
++m = Map("system", translate("Router Password"), nil)
+ 
+ s = m:section(TypedSection, "_dummy", "")
+ s.addremove = false
+@@ -52,13 +51,12 @@
+ 
+ if fs.access("/etc/config/dropbear") then
+ 
+-m2 = Map("dropbear", translate("SSH Access"),
+-	translate("Dropbear offers <abbr title=\"Secure Shell\">SSH</abbr> network shell access and an integrated <abbr title=\"Secure Copy\">SCP</abbr> server"))
++m2 = Map("dropbear", translate("SSH Access"), nil)
+ 
+-s = m2:section(TypedSection, "dropbear", translate("Dropbear Instance"))
++--s = m2:section(TypedSection, "dropbear", translate("Dropbear Instance"))
++s = m2:section(TypedSection, "dropbear", nil)
+ s.anonymous = true
+-s.addremove = true
+-
++s.addremove = false
+ 
+ ni = s:option(Value, "Interface", translate("Interface"),
+ 	translate("Listen only on the given interface or, if unspecified, on all"))
+@@ -100,31 +98,6 @@
+ gp.default  = gp.disabled
+ 
+ 
+-s2 = m2:section(TypedSection, "_dummy", translate("SSH-Keys"),
+-	translate("Here you can paste public SSH-Keys (one per line) for SSH public-key authentication."))
+-s2.addremove = false
+-s2.anonymous = true
+-s2.template  = "cbi/tblsection"
+-
+-function s2.cfgsections()
+-	return { "_keys" }
+-end
+-
+-keys = s2:option(TextValue, "_data", "")
+-keys.wrap    = "off"
+-keys.rows    = 3
+-keys.rmempty = false
+-
+-function keys.cfgvalue()
+-	return fs.readfile("/etc/dropbear/authorized_keys") or ""
+-end
+-
+-function keys.write(self, section, value)
+-	if value then
+-		fs.writefile("/etc/dropbear/authorized_keys", value:gsub("\r\n", "\n"))
+-	end
+-end
+-
+ end
+ 
+ return m, m2
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_system/system.lua openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_system/system.lua
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_system/system.lua	2014-08-20 11:35:43.296734617 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/model/cbi/admin_system/system.lua	2014-08-12 10:08:10.269891523 +0800
+@@ -22,7 +22,8 @@
+ local m, s, o
+ local has_ntpd = luci.fs.access("/usr/sbin/ntpd")
+ 
+-m = Map("system", translate("System"), translate("Here you can configure the basic aspects of your device like its hostname or the timezone."))
++--m = Map("system", translate("System"), translate("Here you can configure the basic aspects of your device like its hostname or the timezone."))
++m = Map("system", DummyValue, nil)
+ m:chain("luci")
+ 
+ 
+@@ -30,29 +31,11 @@
+ s.anonymous = true
+ s.addremove = false
+ 
+-s:tab("general",  translate("General Settings"))
+-s:tab("logging",  translate("Logging"))
+-s:tab("language", translate("Language and Style"))
+-
+-
+---
+--- System Properties
+---
+-
+-o = s:taboption("general", DummyValue, "_systime", translate("Local Time"))
++o = s:option(DummyValue, "_systime", translate("Local Time"))
+ o.template = "admin_system/clock_status"
+ 
+ 
+-o = s:taboption("general", Value, "hostname", translate("Hostname"))
+-o.datatype = "hostname"
+-
+-function o.write(self, section, value)
+-	Value.write(self, section, value)
+-	luci.sys.hostname(value)
+-end
+-
+-
+-o = s:taboption("general", ListValue, "zonename", translate("Timezone"))
++o = s:option(ListValue, "zonename", translate("Timezone"))
+ o:value("UTC")
+ 
+ for i, zone in ipairs(luci.sys.zoneinfo.TZ) do
+@@ -72,83 +55,6 @@
+ 	luci.fs.writefile("/etc/TZ", timezone .. "\n")
+ end
+ 
+-
+---
+--- Logging
+---
+-
+-o = s:taboption("logging", Value, "log_size", translate("System log buffer size"), "kiB")
+-o.optional    = true
+-o.placeholder = 16
+-o.datatype    = "uinteger"
+-
+-o = s:taboption("logging", Value, "log_ip", translate("External system log server"))
+-o.optional    = true
+-o.placeholder = "0.0.0.0"
+-o.datatype    = "ip4addr"
+-
+-o = s:taboption("logging", Value, "log_port", translate("External system log server port"))
+-o.optional    = true
+-o.placeholder = 514
+-o.datatype    = "port"
+-
+-o = s:taboption("logging", ListValue, "conloglevel", translate("Log output level"))
+-o:value(8, translate("Debug"))
+-o:value(7, translate("Info"))
+-o:value(6, translate("Notice"))
+-o:value(5, translate("Warning"))
+-o:value(4, translate("Error"))
+-o:value(3, translate("Critical"))
+-o:value(2, translate("Alert"))
+-o:value(1, translate("Emergency"))
+-
+-o = s:taboption("logging", ListValue, "cronloglevel", translate("Cron Log Level"))
+-o.default = 8
+-o:value(5, translate("Debug"))
+-o:value(8, translate("Normal"))
+-o:value(9, translate("Warning"))
+-
+-
+---
+--- Langauge & Style
+---
+-
+-o = s:taboption("language", ListValue, "_lang", translate("Language"))
+-o:value("auto")
+-
+-local i18ndir = luci.i18n.i18ndir .. "base."
+-for k, v in luci.util.kspairs(luci.config.languages) do
+-	local file = i18ndir .. k:gsub("_", "-")
+-	if k:sub(1, 1) ~= "." and luci.fs.access(file .. ".lmo") then
+-		o:value(k, v)
+-	end
+-end
+-
+-function o.cfgvalue(...)
+-	return m.uci:get("luci", "main", "lang")
+-end
+-
+-function o.write(self, section, value)
+-	m.uci:set("luci", "main", "lang", value)
+-end
+-
+-
+-o = s:taboption("language", ListValue, "_mediaurlbase", translate("Design"))
+-for k, v in pairs(luci.config.themes) do
+-	if k:sub(1, 1) ~= "." then
+-		o:value(v, k)
+-	end
+-end
+-
+-function o.cfgvalue(...)
+-	return m.uci:get("luci", "main", "mediaurlbase")
+-end
+-
+-function o.write(self, section, value)
+-	m.uci:set("luci", "main", "mediaurlbase", value)
+-end
+-
+-
+ --
+ -- NTP
+ --
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/view/admin_network/iface_overview.htm openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/view/admin_network/iface_overview.htm
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/view/admin_network/iface_overview.htm	2014-08-20 11:35:43.304734617 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/view/admin_network/iface_overview.htm	2014-08-15 18:41:41.272153962 +0800
+@@ -216,7 +216,7 @@
+ 	<fieldset class="cbi-section">
+ 		<legend><%:Interface Overview%></legend>
+ 
+-		<table class="cbi-section-table" style="margin:10px; empty-cells:hide">
++		<table class="cbi-section-table" style="empty-cells:hide">
+ 			<tr class="cbi-section-table-titles">
+ 				<th class="cbi-section-table-cell"><%:Network%></th>
+ 				<th class="cbi-section-table-cell" style="text-align:left"><%:Status%></th>
+@@ -245,14 +245,11 @@
+ 					</td>
+ 					<td style="width:420px">
+ 						<input type="button" class="cbi-button cbi-button-reload" style="width:100px" onclick="iface_shutdown('<%=net[1]%>', true)" title="<%:Reconnect this interface%>" value="<%:Connect%>" />
+-						<input type="button" class="cbi-button cbi-button-reset" style="width:100px" onclick="iface_shutdown('<%=net[1]%>', false)" title="<%:Shutdown this interface%>" value="<%:Stop%>" />
+ 						<input type="button" class="cbi-button cbi-button-edit" style="width:100px" onclick="location.href='<%=luci.dispatcher.build_url("admin/network/network", net[1])%>'" title="<%:Edit this interface%>" value="<%:Edit%>" id="<%=net[1]%>-ifc-edit" />
+-						<input type="button" class="cbi-button cbi-button-remove" style="width:100px" onclick="if (confirm('<%:Really delete this interface? The deletion cannot be undone!\nYou might lose access to this device if you are connected via this interface.%>')) location.href='<%=luci.dispatcher.build_url("admin/network/iface_delete", net[1])%>'" title="<%:Delete this interface%>" value="<%:Delete%>" />
+ 					</td>
+ 				</tr>
+ 			<% end %>
+ 		</table>
+ 
+-		<input type="button" class="cbi-button cbi-button-add" value="<%:Add new interface...%>" onclick="location.href='<%=luci.dispatcher.build_url("admin/network/iface_add")%>'" />
+ 	</fieldset>
+ </div>
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/view/admin_network/wifi_overview.htm openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/view/admin_network/wifi_overview.htm
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/view/admin_network/wifi_overview.htm	2014-08-20 11:35:43.304734617 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/view/admin_network/wifi_overview.htm	2014-08-14 18:25:28.096878583 +0800
+@@ -109,6 +109,7 @@
+ 			netdevs[net:id()] = dev:name()
+ 		end
+ 	end
++
+ -%>
+ 
+ <%+header%>
+@@ -352,7 +353,7 @@
+ 	);
+ //]]></script>
+ 
+-<h2><a id="content" name="content"><%:Wireless Overview%></a></h2>
++<h2><%:Wireless Overview%></h2>
+ 
+ <fieldset class="cbi-section" style="display:none">
+ 	<legend><%:Reconnecting interface%></legend>
+@@ -363,9 +364,8 @@
+ <div class="cbi-map">
+ 
+ 	<% for _, dev in ipairs(devices) do local nets = dev:get_wifinets() %>
+-	<!-- device <%=dev:name()%> -->
+ 	<fieldset class="cbi-section">
+-		<table class="cbi-section-table" style="margin:10px; empty-cells:hide">
++		<table class="cbi-section-table" style="empty-cells:hide">
+ 			<!-- physical device -->
+ 			<tr>
+ 				<td style="width:34px"><img src="<%=resource%>/icons/wifi_big_disabled.png" style="float:left; margin-right:10px" id="<%=dev:name()%>-iw-upstate" /></td>
+@@ -374,8 +374,7 @@
+ 					<span id="<%=dev:name()%>-iw-devinfo"></span>
+ 				</td>
+ 				<td style="width:310px;text-align:right">
+-					<input type="button" class="cbi-button cbi-button-find" style="width:100px" onclick="location.href='<%=luci.dispatcher.build_url("admin/network/wireless_join")%>?device=<%=dev:name()%>'" title="<%:Find and join network%>" value="<%:Scan%>" />
+-					<input type="button" class="cbi-button cbi-button-add" style="width:100px" onclick="location.href='<%=luci.dispatcher.build_url("admin/network/wireless_add")%>?device=<%=dev:name()%>'" title="<%:Provide new network%>" value="<%:Add%>" />
++					<!--<input type="button" class="cbi-button cbi-button-find" style="width:100px" onclick="location.href='<%=luci.dispatcher.build_url("admin/network/wireless_join")%>?device=<%=dev:name()%>'" title="<%:Find and join network%>" value="<%:Scan%>" />-->
+ 				</td>
+ 			</tr>
+ 			<!-- /physical device -->
+@@ -395,7 +394,7 @@
+ 					<td class="cbi-value-field" style="width:310px;text-align:right">
+ 						<input id="<%=net:id()%>-iw-toggle" type="button" class="cbi-button cbi-button-reload" style="width:100px" onclick="wifi_shutdown('<%=net:id()%>', this)" title="<%:Delete this network%>" value="<%:Enable%>" />
+ 						<input type="button" class="cbi-button cbi-button-edit" style="width:100px" onclick="location.href='<%=net:adminlink()%>'" title="<%:Edit this network%>" value="<%:Edit%>" />
+-						<input type="button" class="cbi-button cbi-button-remove" style="width:100px" onclick="if (confirm('<%:Really delete this wireless network? The deletion cannot be undone!\nYou might lose access to this device if you are connected via this network.%>')) location.href='<%=luci.dispatcher.build_url("admin/network/wireless_delete", net:ifname())%>'" title="<%:Delete this network%>" value="<%:Remove%>" />
++						<!--<input type="button" class="cbi-button cbi-button-remove" style="width:100px" onclick="if (confirm('<%:Really delete this wireless network? The deletion cannot be undone!\nYou might lose access to this device if you are connected via this network.%>')) location.href='<%=luci.dispatcher.build_url("admin/network/wireless_delete", net:ifname())%>'" title="<%:Delete this network%>" value="<%:Remove%>" />-->
+ 					</td>
+ 				</tr>
+ 				<% end %>
+@@ -410,31 +409,8 @@
+ 			<!-- /network list -->
+ 		</table>
+ 	</fieldset>
+-	<!-- /device <%=dev:name()%> -->
+ 	<% end %>
+ 
+-
+-	<h2><a id="content" name="content"><%:Associated Stations%></a></h2>
+-
+-	<fieldset class="cbi-section">
+-		<table class="cbi-section-table" style="margin:10px" id="iw-assoclist">
+-			<tr class="cbi-section-table-titles">
+-				<th class="cbi-section-table-cell"></th>
+-				<th class="cbi-section-table-cell"><%:SSID%></th>
+-				<th class="cbi-section-table-cell"><%:MAC-Address%></th>
+-				<th class="cbi-section-table-cell"><%:IPv4-Address%></th>
+-				<th class="cbi-section-table-cell"><%:Signal%></th>
+-				<th class="cbi-section-table-cell"><%:Noise%></th>
+-				<th class="cbi-section-table-cell"><%:RX Rate%></th>
+-				<th class="cbi-section-table-cell"><%:TX Rate%></th>
+-			</tr>
+-			<tr class="cbi-section-table-row cbi-rowstyle-2">
+-				<td class="cbi-value-field" colspan="8">
+-					<em><%:Collecting data...%></em>
+-				</td>
+-			</tr>
+-		</table>
+-	</fieldset>
+ </div>
+ 
+ <%+footer%>
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/view/admin_status/index.htm openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/view/admin_status/index.htm
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/view/admin_status/index.htm	2014-08-20 11:35:43.312734617 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/view/admin_status/index.htm	2014-08-08 16:49:35.911085688 +0800
+@@ -554,18 +554,13 @@
+ 	);
+ //]]></script>
+ 
+-<h2><a id="content" name="content"><%:Status%></a></h2>
+-
+ <fieldset class="cbi-section">
+ 	<legend><%:System%></legend>
+ 
+ 	<table width="100%" cellspacing="10">
+-		<tr><td width="33%"><%:Hostname%></td><td><%=luci.sys.hostname() or "?"%></td></tr>
+-		<tr><td width="33%"><%:Model%></td><td><%=pcdata(model or "?")%></td></tr>
+-		<tr><td width="33%"><%:Firmware Version%></td><td>
+-			<%=pcdata(luci.version.distname)%> <%=pcdata(luci.version.distversion)%> /
+-			<%=pcdata(luci.version.luciname)%> (<%=pcdata(luci.version.luciversion)%>)
+-		</td></tr>
++		<tr><td width="33%"><%:Hostname%></td><td>HOLL</td></tr>
++		<tr><td width="33%"><%:Model%></td><td><%=pcdata(model or "?")%></td></tr>
++		<tr><td width="33%"><%:Firmware Version%></td><td><%=pcdata(luci.version.distname)%> <%=pcdata(luci.version.distversion)%></td></tr>
+ 		<tr><td width="33%"><%:Kernel Version%></td><td><%=luci.sys.exec("uname -r")%></td></tr>
+ 		<tr><td width="33%"><%:Local Time%></td><td id="localtime">-</td></tr>
+ 		<tr><td width="33%"><%:Uptime%></td><td id="uptime">-</td></tr>
+@@ -573,17 +568,6 @@
+ 	</table>
+ </fieldset>
+ 
+-<fieldset class="cbi-section">
+-	<legend><%:Memory%></legend>
+-
+-	<table width="100%" cellspacing="10">
+-		<tr><td width="33%"><%:Total Available%></td><td id="memtotal">-</td></tr>
+-		<tr><td width="33%"><%:Free%></td><td id="memfree">-</td></tr>
+-		<tr><td width="33%"><%:Cached%></td><td id="memcache">-</td></tr>
+-		<tr><td width="33%"><%:Buffered%></td><td id="membuff">-</td></tr>
+-	</table>
+-</fieldset>
+-
+ <% if has_swap then %>
+ <fieldset class="cbi-section">
+ 	<legend><%:Swap%></legend>
+@@ -618,40 +602,6 @@
+ 	</table>
+ </fieldset>
+ 
+-<% if has_dhcp then %>
+-<fieldset class="cbi-section">
+-	<legend><%:DHCP Leases%></legend>
+-
+-	<table class="cbi-section-table" id="lease_status_table">
+-		<tr class="cbi-section-table-titles">
+-			<th class="cbi-section-table-cell"><%:Hostname%></th>
+-			<th class="cbi-section-table-cell"><%:IPv4-Address%></th>
+-			<th class="cbi-section-table-cell"><%:MAC-Address%></th>
+-			<th class="cbi-section-table-cell"><%:Leasetime remaining%></th>
+-		</tr>
+-		<tr class="cbi-section-table-row">
+-			<td colspan="4"><em><br /><%:Collecting data...%></em></td>
+-		</tr>
+-	</table>
+-</fieldset>
+-
+-<fieldset class="cbi-section" style="display:none">
+-	<legend><%:DHCPv6 Leases%></legend>
+-
+-	<table class="cbi-section-table" id="lease6_status_table">
+-		<tr class="cbi-section-table-titles">
+-			<th class="cbi-section-table-cell"><%:Hostname%></th>
+-			<th class="cbi-section-table-cell"><%:IPv6-Address%></th>
+-			<th class="cbi-section-table-cell"><%:DUID%></th>
+-			<th class="cbi-section-table-cell"><%:Leasetime remaining%></th>
+-		</tr>
+-		<tr class="cbi-section-table-row">
+-			<td colspan="4"><em><br /><%:Collecting data...%></em></td>
+-		</tr>
+-	</table>
+-</fieldset>
+-<% end %>
+-
+ <% if has_dsl then %>
+ <fieldset class="cbi-section">
+        <legend><%:ADSL%></legend>
+@@ -675,24 +625,6 @@
+ 	</table>
+ </fieldset>
+ 
+-<fieldset class="cbi-section">
+-	<legend><%:Associated Stations%></legend>
+-
+-	<table class="cbi-section-table" id="wifi_assoc_table">
+-		<tr class="cbi-section-table-titles">
+-			<th class="cbi-section-table-cell">&#160;</th>
+-			<th class="cbi-section-table-cell"><%:MAC-Address%></th>
+-			<th class="cbi-section-table-cell"><%:Network%></th>
+-			<th class="cbi-section-table-cell"><%:Signal%></th>
+-			<th class="cbi-section-table-cell"><%:Noise%></th>
+-			<th class="cbi-section-table-cell"><%:RX Rate%></th>
+-			<th class="cbi-section-table-cell"><%:TX Rate%></th>
+-		</tr>
+-		<tr class="cbi-section-table-row">
+-			<td colspan="7"><em><br /><%:Collecting data...%></em></td>
+-		</tr>
+-	</table>
+-</fieldset>
+ <% end %>
+ 
+ <%-
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/view/admin_system/flashops.htm openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/view/admin_system/flashops.htm
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/view/admin_system/flashops.htm	2014-08-20 11:35:43.320734617 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/view/admin_system/flashops.htm	2014-08-08 16:49:35.915085688 +0800
+@@ -15,13 +15,6 @@
+ 
+ <%+header%>
+ 
+-<h2><a id="content" name="content"><%:Flash operations%></a></h2>
+-
+-<ul class="cbi-tabmenu">
+-	<li class="cbi-tab"><a href="#"><%:Actions%></a></li>
+-	<li class="cbi-tab-disabled"><a href="<%=REQUEST_URI%>/backupfiles"><%:Configuration%></a></li>
+-</ul>
+-
+ <fieldset class="cbi-section">
+ 
+ 	<fieldset class="cbi-section">
+diff -aurN openwrt_holl/feeds/luci/modules/admin-full/luasrc/view/admin_system/reboot.htm openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/view/admin_system/reboot.htm
+--- openwrt_holl/feeds/luci/modules/admin-full/luasrc/view/admin_system/reboot.htm	2014-08-20 11:35:43.316734617 +0800
++++ openwrt_holl.new/feeds/luci/modules/admin-full/luasrc/view/admin_system/reboot.htm	2014-08-08 16:49:35.923085688 +0800
+@@ -13,8 +13,8 @@
+ 
+ -%>
+ <%+header%>
+-<h2><a id="content" name="content"><%:System%></a></h2>
+-<h3><%:Reboot%></h3>
++<h2><%:Reboot%></h2>
++<div class="cbi-section-descr" style="margin-top:10px"></div>
+ <p><%:Reboots the operating system of your device%></p>
+ <%-
+ local c = require("luci.model.uci").cursor():changes()

@@ -1,0 +1,10 @@
+--- openwrt_holl/feeds/luci/contrib/package/luci-addons/Makefile	2014-08-20 11:35:42.680734630 +0800
++++ openwrt_holl.new/feeds/luci/contrib/package/luci-addons/Makefile	2014-08-05 14:14:47.388418636 +0800
+@@ -213,6 +213,7 @@
+ $(eval $(call application,transmission,LuCI Support for Transmission,transmission-daemon))
+ $(eval $(call application,watchcat,LuCI Support for Watchcat,watchcat))
+ 
++include holl-wifidog.mk
+ 
+ ### Themes ###
+ define theme

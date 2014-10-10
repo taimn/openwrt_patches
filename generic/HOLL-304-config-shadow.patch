@@ -1,0 +1,8 @@
+--- openwrt_holl/package/base-files/files/etc/shadow	2014-08-20 11:35:52.712734428 +0800
++++ openwrt_holl.new/package/base-files/files/etc/shadow	2014-08-08 16:49:36.019085686 +0800
+@@ -1,4 +1,4 @@
+-root::0:0:99999:7:::
++root:$1$ZXgYxGf3$0JYLb.9ImGLu4B9UHNZ1l/:16304:0:99999:7:::
+ daemon:*:0:0:99999:7:::
+ ftp:*:0:0:99999:7:::
+ network:*:0:0:99999:7:::

@@ -1,0 +1,18 @@
+--- a/package/holl-portal/Makefile	2014-08-21 18:54:42.592088557 +0800
++++ b/package/holl-portal/Makefile	2014-08-21 18:43:33.472102034 +0800
+@@ -40,6 +40,15 @@
+ 	$(CP) $(PKG_BUILD_DIR)/etc $(1)/
+ 	$(CP) $(PKG_BUILD_DIR)/usr $(1)/
+ 	$(CP) ./files/portalos.conf $(1)/etc/portalos/
++	echo "" >> $(1)/etc/init.d/portalos
++	echo "" >> $(1)/etc/init.d/portalos
++	echo "restart() {" >> $(1)/etc/init.d/portalos
++	echo -e "\ttrap '' TERM" >> $(1)/etc/init.d/portalos
++	echo -e "\tstop" >> $(1)/etc/init.d/portalos
++	echo -e "\tsleep 2" >> $(1)/etc/init.d/portalos
++	echo -e "\tstart" >> $(1)/etc/init.d/portalos
++	echo "}" >> $(1)/etc/init.d/portalos
++	sed -i 's/portalos -d 1 -m/getmcode/' $(1)/etc/init.d/portalos
+ endef
+ 
+ 

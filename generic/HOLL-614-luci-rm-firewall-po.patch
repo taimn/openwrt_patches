@@ -1,0 +1,8 @@
+--- a/feeds/luci/applications/luci-firewall/Makefile.orig	2014-08-22 14:58:08.867670195 +0800
++++ b/feeds/luci/applications/luci-firewall/Makefile	2014-08-22 14:58:30.071669768 +0800
+@@ -1,4 +1,4 @@
+-PO = firewall
++#PO = firewall
+ 
+ include ../../build/config.mk
+ include ../../build/module.mk

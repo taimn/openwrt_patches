@@ -1,0 +1,76 @@
+diff -aurN openwrt_holl/package/holl-portal/files/getmcode openwrt_holl.new/package/holl-portal/files/getmcode
+--- openwrt_holl/package/holl-portal/files/getmcode        1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/package/holl-portal/files/getmcode    2014-08-21 13:51:40.750108175 +0800
+@@ -0,0 +1,2 @@
++#!/bin/sh
++dd if=/dev/mtd4 skip=1 bs=7 count=3 2>/dev/null | hexdump -v -n 16 -e '1/1 "%c"'
+diff -aurN openwrt_holl/package/holl-portal/files/getwmac openwrt_holl.new/package/holl-portal/files/getwmac
+--- openwrt_holl/package/holl-portal/files/getwmac        1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/package/holl-portal/files/getwmac    2014-08-21 13:51:40.750108175 +0800
+@@ -0,0 +1,2 @@
++#!/bin/sh
++hexdump -s 0x1002 -n 6 -v -e '1/1 "%02X"' /dev/mtd4
+diff -aurN openwrt_holl/package/holl-portal/Makefile openwrt_holl.new/package/holl-portal/Makefile
+--- openwrt_holl/package/holl-portal/Makefile	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/package/holl-portal/Makefile	2014-08-21 13:54:20.022104967 +0800
+@@ -0,0 +1,50 @@
++#
++# Copyright (C) 2009-2010 Jo-Philipp Wich <xm@subsignal.org>
++#
++# This is free software, licensed under the GNU General Public License v2.
++# See /LICENSE for more information.
++#
++
++include $(TOPDIR)/rules.mk
++
++PKG_NAME:=holl-portal
++PKG_RELEASE:=0.9
++
++PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
++
++include $(INCLUDE_DIR)/package.mk
++
++define Package/holl-portal
++  SECTION:=net
++  CATEGORY:=HOLL_SERVICE
++  TITLE:=holl bussiness router portal
++  MAINTAINER:=Li peng <li_p@holl.cn>
++  DEPENDS:=+libpcap +iptables-mod-extra +iptables-mod-ipopt +iptables-mod-nat-extra +libpthread
++endef
++
++define Package/holl-portal/description
++ holl bussiness router portal
++endef
++
++define Build/Prepare
++	mkdir -p $(PKG_BUILD_DIR)
++	$(CP) ./src/* $(PKG_BUILD_DIR)/
++endef
++
++define Build/Compile
++	$(MAKE) -C $(PKG_BUILD_DIR)
++endef
++
++define Package/holl-portal/install
++	$(INSTALL_DIR) $(1)
++	$(CP) $(PKG_BUILD_DIR)/etc $(1)/
++	$(CP) $(PKG_BUILD_DIR)/usr $(1)/
++	$(CP) ./files/get* $(1)/usr/bin/
++	$(SED) 's/#TrustedWANHOSTList.*/TrustedWANHOSTList www.wifi360.cc,wb.holl.cn/' $(1)/etc/portalos/portalos.conf
++	sed -i '/^mcode/a[ "gw_id" == "`/sbin/uci get portalos.portalos.gw_id`" ] && /sbin/uci set portalos.portalos.gw_id=`/usr/bin/getwmac`' $(1)/etc/init.d/portalos
++	sed -i 's/portalos -d 1 -m/getmcode/' $(1)/etc/init.d/portalos
++	chmod +x $(1)/usr/bin/get*
++endef
++
++
++$(eval $(call BuildPackage,holl-portal))
+diff -aurN openwrt_holl/package/holl-portal/src/Makefile openwrt_holl.new/package/holl-portal/src/Makefile
+--- openwrt_holl/package/holl-portal/src/Makefile	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/package/holl-portal/src/Makefile	2014-08-20 19:43:43.462069593 +0800
+@@ -0,0 +1,6 @@
++
++all: 
++	mv wifidog_wifiap-1_ar71xx.ipk wifidog_wifiap-1_ar71xx.tar.gz
++	tar -zxvf wifidog_wifiap-1_ar71xx.tar.gz
++	tar -zxvf data.tar.gz
++	

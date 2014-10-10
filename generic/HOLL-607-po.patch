@@ -1,0 +1,197 @@
+diff -aurN openwrt_holl/feeds/luci/po/zh_CN/wifidog.po openwrt_holl.new/feeds/luci/po/zh_CN/wifidog.po
+--- openwrt_holl/feeds/luci/po/zh_CN/wifidog.po	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_holl.new/feeds/luci/po/zh_CN/wifidog.po	2014-08-11 20:57:28.230847093 +0800
+@@ -0,0 +1,23 @@
++msgid "webportal"
++msgstr "Web认证"
++
++msgid "config webportal values"
++msgstr "配置Web认证参数"
++
++msgid "enable webportal"
++msgstr "启用Web认证"
++
++msgid "config values"
++msgstr "配置参数"
++
++msgid "gw_id"
++msgstr "热点名称"
++
++msgid "gw_idMSG"
++msgstr "热点名称务必与云中心管理后台名称一致，只支持英文和数字"
++
++msgid "mcode"
++msgstr "机器码"
++
++msgid "mcodeMSG"
++msgstr "机器码不要修改"
+diff -aurN openwrt_holl/feeds/luci/po/zh_CN/base.po openwrt_holl.new/feeds/luci/po/zh_CN/base.po
+--- openwrt_holl/feeds/luci/po/zh_CN/base.po	2014-08-20 11:35:43.844734606 +0800
++++ openwrt_holl.new/feeds/luci/po/zh_CN/base.po	2014-08-15 18:33:39.244145517 +0800
+@@ -196,7 +196,7 @@
+ msgstr "接入本地中继桥的地址"
+ 
+ msgid "Administration"
+-msgstr "管理权"
++msgstr "修改登录密码"
+ 
+ msgid "Advanced Settings"
+ msgstr "高级设置"
+@@ -336,7 +336,7 @@
+ msgstr "备份/升级"
+ 
+ msgid "Backup / Restore"
+-msgstr "备份/恢复"
++msgstr "备份/恢复出厂设置"
+ 
+ msgid "Backup file list"
+ msgstr "文件备份列表"
+@@ -695,7 +695,7 @@
+ msgstr "下载并安装软件包"
+ 
+ msgid "Download backup"
+-msgstr "下载备份"
++msgstr "备份配置文件"
+ 
+ msgid "Dropbear Instance"
+ msgstr "Dropbear设置"
+@@ -725,7 +725,7 @@
+ msgstr "EAP-Method"
+ 
+ msgid "Edit"
+-msgstr "修改"
++msgstr "配置"
+ 
+ msgid "Edit this interface"
+ msgstr "修改此接口"
+@@ -868,10 +868,10 @@
+ msgstr "刷新固件"
+ 
+ msgid "Flash image..."
+-msgstr "刷写固件..."
++msgstr "开始升级"
+ 
+ msgid "Flash new firmware image"
+-msgstr "刷写新的固件"
++msgstr "软件升级"
+ 
+ msgid "Flash operations"
+ msgstr "刷新操作"
+@@ -1176,6 +1176,9 @@
+ msgid "Interface Configuration"
+ msgstr "接口配置"
+ 
++msgid "wifiencrypt"
++msgstr "WIFI密码"
++
+ msgid "Interface Overview"
+ msgstr "接口总览"
+ 
+@@ -1195,7 +1198,7 @@
+ msgstr "接口已关闭"
+ 
+ msgid "Interfaces"
+-msgstr "接口"
++msgstr "网络参数"
+ 
+ msgid "Internal Server Error"
+ msgstr "内部服务器错误"
+@@ -1534,7 +1537,7 @@
+ msgstr "子网掩码"
+ 
+ msgid "Network"
+-msgstr "网络"
++msgstr "网络设置"
+ 
+ msgid "Network Utilities"
+ msgstr "网络工具"
+@@ -1686,7 +1689,7 @@
+ msgstr "更新内部路由表"
+ 
+ msgid "Overview"
+-msgstr "总览"
++msgstr "运行状态"
+ 
+ msgid "Owner"
+ msgstr "用户名"
+@@ -1764,7 +1767,7 @@
+ msgstr "执行重启"
+ 
+ msgid "Perform reset"
+-msgstr "执行复位"
++msgstr "恢复厂家设置"
+ 
+ msgid "Phy Rate:"
+ msgstr "物理速率:"
+@@ -1937,13 +1940,13 @@
+ msgstr "重绑定保护"
+ 
+ msgid "Reboot"
+-msgstr "重启"
++msgstr "重启路由器"
+ 
+ msgid "Rebooting..."
+ msgstr "重启中..."
+ 
+ msgid "Reboots the operating system of your device"
+-msgstr "重启OpenWrt"
++msgstr "重启HOLL"
+ 
+ msgid "Receive"
+ msgstr "接收"
+@@ -2039,7 +2042,7 @@
+ msgstr ""
+ 
+ msgid "Router Password"
+-msgstr "主机密码"
++msgstr "路由器密码"
+ 
+ msgid "Routes"
+ msgstr "路由表"
+@@ -2071,10 +2074,10 @@
+ msgstr "保存"
+ 
+ msgid "Save & Apply"
+-msgstr "保存&应用"
++msgstr "应用"
+ 
+ msgid "Save &#38; Apply"
+-msgstr "保存&#38;应用"
++msgstr "应用"
+ 
+ msgid "Scan"
+ msgstr "搜索"
+@@ -2273,13 +2276,13 @@
+ msgstr "同步中..."
+ 
+ msgid "System"
+-msgstr "系统"
++msgstr "系统设置"
+ 
+ msgid "System Log"
+ msgstr "系统日志"
+ 
+ msgid "System Properties"
+-msgstr "系统属性"
++msgstr "时间/时区"
+ 
+ msgid "System log buffer size"
+ msgstr "系统日志缓冲区大小"
+@@ -2612,7 +2615,7 @@
+ msgstr "上传兼容的sysupgrade固件以刷新当前系统。"
+ 
+ msgid "Upload archive..."
+-msgstr "上传备份..."
++msgstr "载入配置文件"
+ 
+ msgid "Uploaded File"
+ msgstr "上传的文件"
+@@ -2739,7 +2742,7 @@
+ msgstr "警告: 有尚未保存的更改，重启将丢失!"
+ 
+ msgid "Wifi"
+-msgstr "无线"
++msgstr "无线设置"
+ 
+ msgid "Wireless"
+ msgstr "无线"

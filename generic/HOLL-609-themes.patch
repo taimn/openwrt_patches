@@ -1,0 +1,50 @@
+diff -aurN openwrt_holl/feeds/luci/themes/bootstrap/luasrc/view/themes/bootstrap/footer.htm openwrt_holl.new/feeds/luci/themes/bootstrap/luasrc/view/themes/bootstrap/footer.htm
+--- openwrt_holl/feeds/luci/themes/bootstrap/luasrc/view/themes/bootstrap/footer.htm	2014-08-20 11:35:41.836734647 +0800
++++ openwrt_holl.new/feeds/luci/themes/bootstrap/luasrc/view/themes/bootstrap/footer.htm	2014-08-08 16:49:35.975085687 +0800
+@@ -22,18 +22,7 @@
+ 
+ 	local categories = disp.node_childs(tree)
+ %>
+-   <footer><a href="http://luci.subsignal.org/">Powered by <%= luci.__appname__ .. " (" .. luci.__version__ .. ")" %></a>
+-
+-    <%=luci.version.distversion%>
+-
+-    <% if #categories > 1 then %>
+-     <ul class="breadcrumb pull-right" id="modemenu">
+-	    <% for i, r in ipairs(categories) do %>
+-		    <li<% if request[1] == r then %> class="active"<%end%>><a href="<%=controller%>/<%=r%>/"><%=striptags(translate(tree.nodes[r].title))%></a> <span class="divider">|</span></li>
+-	    <% end %>
+-     </ul>
+-    <% end %>
+-   </footer>
++   <footer>Copyright &copy HOLL Technologies Co., Ltd. All rights reserved.</footer>
+    </div>
+   </div>
+  </body>
+diff -aurN openwrt_holl/feeds/luci/themes/bootstrap/luasrc/view/themes/bootstrap/header.htm openwrt_holl.new/feeds/luci/themes/bootstrap/luasrc/view/themes/bootstrap/header.htm
+--- openwrt_holl/feeds/luci/themes/bootstrap/luasrc/view/themes/bootstrap/header.htm	2014-08-20 11:35:41.836734647 +0800
++++ openwrt_holl.new/feeds/luci/themes/bootstrap/luasrc/view/themes/bootstrap/header.htm	2014-08-12 16:14:52.798791894 +0800
+@@ -100,7 +100,7 @@
+ <html lang="<%=luci.i18n.context.lang%>">
+  <head>
+   <meta charset="utf-8">
+-  <title><%=striptags( hostname .. ( (node and node.title) and ' - ' .. translate(node.title) or '')) %> - LuCI</title>
++  <title>HOLL<%=striptags( ( (node and node.title) and ' - ' .. translate(node.title) or '')) %></title>
+   <!--[if lt IE 9]><script src="<%=media%>/html5.js"></script><![endif]-->
+   <meta name="viewport" content="initial-scale=1.0">
+   <link rel="stylesheet" href="<%=media%>/cascade.css">
+@@ -119,7 +119,7 @@
+   <header>
+    <div class="fill">
+     <div class="container">
+-     <a class="brand" href="#"><%=hostname%></a>
++     <a class="brand" href="#"><img src="<%=resource%>/icons/logo.png" /></a>
+      <ul class="nav">
+ 	 <%-
+ 		local function submenu(prefix, node)
+@@ -206,4 +206,4 @@
+ <%- end -%>
+ 
+ <div id="maincontent" class="container">
+-<% if category then subtree("/" .. category .. "/", cattree) end %>
++<%# if category then subtree("/" .. category .. "/", cattree) end -%>

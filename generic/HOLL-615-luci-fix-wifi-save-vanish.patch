@@ -1,0 +1,9 @@
+--- openwrt/feeds/luci/modules/base/luasrc/view/cbi/tabcontainer.htm	2014-08-30 09:13:57.161373656 +0800
++++ openwrt/feeds/luci/modules/base/luasrc/view/cbi/tabcontainer.htm.new	2014-09-04 11:26:52.946754409 +0800
+@@ -1,5 +1,5 @@
+ <% for tab, data in pairs(self.tabs) do %>
+-	<div class="cbi-tabcontainer" id="container.<%=self.config%>.<%=section%>.<%=tab%>"<% if tab ~= self.selected_tab then %> style="display:none"<% end %>>
++	<div class="cbi-tabcontainer" id="container.<%=self.config%>.<%=section%>.<%=tab%>">
+ 		<% if data.description then %><div class="cbi-tab-descr"><%=data.description%></div><% end %>
+ 		<% self:render_tab(tab, section, scope or {}) %>
+ 	</div>

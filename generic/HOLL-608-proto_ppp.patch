@@ -1,0 +1,454 @@
+diff -aurN openwrt_holl/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_l2tp.lua openwrt_holl.new/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_l2tp.lua
+--- openwrt_holl/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_l2tp.lua	2014-08-20 11:35:41.776734648 +0800
++++ openwrt_holl.new/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_l2tp.lua	2014-08-12 16:19:46.414785980 +0800
+@@ -26,44 +26,3 @@
+ password = section:taboption("general", Value, "password", translate("PAP/CHAP password"))
+ password.password = true
+ 
+-if luci.model.network:has_ipv6() then
+-
+-	ipv6 = section:taboption("advanced", Flag, "ipv6",
+-		translate("Enable IPv6 negotiation on the PPP link"))
+-
+-	ipv6.default = ipv6.disabled
+-
+-end
+-
+-defaultroute = section:taboption("advanced", Flag, "defaultroute",
+-	translate("Use default gateway"),
+-	translate("If unchecked, no default route is configured"))
+-
+-defaultroute.default = defaultroute.enabled
+-
+-
+-metric = section:taboption("advanced", Value, "metric",
+-	translate("Use gateway metric"))
+-
+-metric.placeholder = "0"
+-metric.datatype    = "uinteger"
+-metric:depends("defaultroute", defaultroute.enabled)
+-
+-
+-peerdns = section:taboption("advanced", Flag, "peerdns",
+-	translate("Use DNS servers advertised by peer"),
+-	translate("If unchecked, the advertised DNS server addresses are ignored"))
+-
+-peerdns.default = peerdns.enabled
+-
+-
+-dns = section:taboption("advanced", DynamicList, "dns",
+-	translate("Use custom DNS servers"))
+-
+-dns:depends("peerdns", "")
+-dns.datatype = "ipaddr"
+-dns.cast     = "string"
+-
+-mtu = section:taboption("advanced", Value, "mtu", translate("Override MTU"))
+-mtu.placeholder = "1500"
+-mtu.datatype    = "max(9200)"
+diff -aurN openwrt_holl/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_ppp.lua openwrt_holl.new/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_ppp.lua
+--- openwrt_holl/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_ppp.lua	2014-08-20 11:35:41.776734648 +0800
++++ openwrt_holl.new/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_ppp.lua	2014-08-12 16:19:19.874786514 +0800
+@@ -37,100 +37,3 @@
+ password = section:taboption("general", Value, "password", translate("PAP/CHAP password"))
+ password.password = true
+ 
+-
+-if luci.model.network:has_ipv6() then
+-
+-	ipv6 = section:taboption("advanced", Flag, "ipv6",
+-		translate("Enable IPv6 negotiation on the PPP link"))
+-
+-	ipv6.default = ipv6.disabled
+-
+-end
+-
+-
+-defaultroute = section:taboption("advanced", Flag, "defaultroute",
+-	translate("Use default gateway"),
+-	translate("If unchecked, no default route is configured"))
+-
+-defaultroute.default = defaultroute.enabled
+-
+-
+-metric = section:taboption("advanced", Value, "metric",
+-	translate("Use gateway metric"))
+-
+-metric.placeholder = "0"
+-metric.datatype    = "uinteger"
+-metric:depends("defaultroute", defaultroute.enabled)
+-
+-
+-peerdns = section:taboption("advanced", Flag, "peerdns",
+-	translate("Use DNS servers advertised by peer"),
+-	translate("If unchecked, the advertised DNS server addresses are ignored"))
+-
+-peerdns.default = peerdns.enabled
+-
+-
+-dns = section:taboption("advanced", DynamicList, "dns",
+-	translate("Use custom DNS servers"))
+-
+-dns:depends("peerdns", "")
+-dns.datatype = "ipaddr"
+-dns.cast     = "string"
+-
+-
+-keepalive_failure = section:taboption("advanced", Value, "_keepalive_failure",
+-	translate("LCP echo failure threshold"),
+-	translate("Presume peer to be dead after given amount of LCP echo failures, use 0 to ignore failures"))
+-
+-function keepalive_failure.cfgvalue(self, section)
+-	local v = m:get(section, "keepalive")
+-	if v and #v > 0 then
+-		return tonumber(v:match("^(%d+)[ ,]+%d+") or v)
+-	end
+-end
+-
+-function keepalive_failure.write() end
+-function keepalive_failure.remove() end
+-
+-keepalive_failure.placeholder = "0"
+-keepalive_failure.datatype    = "uinteger"
+-
+-
+-keepalive_interval = section:taboption("advanced", Value, "_keepalive_interval",
+-	translate("LCP echo interval"),
+-	translate("Send LCP echo requests at the given interval in seconds, only effective in conjunction with failure threshold"))
+-
+-function keepalive_interval.cfgvalue(self, section)
+-	local v = m:get(section, "keepalive")
+-	if v and #v > 0 then
+-		return tonumber(v:match("^%d+[ ,]+(%d+)"))
+-	end
+-end
+-
+-function keepalive_interval.write(self, section, value)
+-	local f = tonumber(keepalive_failure:formvalue(section)) or 0
+-	local i = tonumber(value) or 5
+-	if i < 1 then i = 1 end
+-	if f > 0 then
+-		m:set(section, "keepalive", "%d %d" %{ f, i })
+-	else
+-		m:del(section, "keepalive")
+-	end
+-end
+-
+-keepalive_interval.remove      = keepalive_interval.write
+-keepalive_interval.placeholder = "5"
+-keepalive_interval.datatype    = "min(1)"
+-
+-
+-demand = section:taboption("advanced", Value, "demand",
+-	translate("Inactivity timeout"),
+-	translate("Close inactive connection after the given amount of seconds, use 0 to persist connection"))
+-
+-demand.placeholder = "0"
+-demand.datatype    = "uinteger"
+-
+-
+-mtu = section:taboption("advanced", Value, "mtu", translate("Override MTU"))
+-mtu.placeholder = "1500"
+-mtu.datatype    = "max(9200)"
+diff -aurN openwrt_holl/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_pppoa.lua openwrt_holl.new/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_pppoa.lua
+--- openwrt_holl/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_pppoa.lua	2014-08-20 11:35:41.776734648 +0800
++++ openwrt_holl.new/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_pppoa.lua	2014-08-12 16:18:02.646788070 +0800
+@@ -43,100 +43,3 @@
+ password = section:taboption("general", Value, "password", translate("PAP/CHAP password"))
+ password.password = true
+ 
+-
+-if luci.model.network:has_ipv6() then
+-
+-	ipv6 = section:taboption("advanced", Flag, "ipv6",
+-		translate("Enable IPv6 negotiation on the PPP link"))
+-
+-	ipv6.default = ipv6.disabled
+-
+-end
+-
+-
+-defaultroute = section:taboption("advanced", Flag, "defaultroute",
+-	translate("Use default gateway"),
+-	translate("If unchecked, no default route is configured"))
+-
+-defaultroute.default = defaultroute.enabled
+-
+-
+-metric = section:taboption("advanced", Value, "metric",
+-	translate("Use gateway metric"))
+-
+-metric.placeholder = "0"
+-metric.datatype    = "uinteger"
+-metric:depends("defaultroute", defaultroute.enabled)
+-
+-
+-peerdns = section:taboption("advanced", Flag, "peerdns",
+-	translate("Use DNS servers advertised by peer"),
+-	translate("If unchecked, the advertised DNS server addresses are ignored"))
+-
+-peerdns.default = peerdns.enabled
+-
+-
+-dns = section:taboption("advanced", DynamicList, "dns",
+-	translate("Use custom DNS servers"))
+-
+-dns:depends("peerdns", "")
+-dns.datatype = "ipaddr"
+-dns.cast     = "string"
+-
+-
+-keepalive_failure = section:taboption("advanced", Value, "_keepalive_failure",
+-	translate("LCP echo failure threshold"),
+-	translate("Presume peer to be dead after given amount of LCP echo failures, use 0 to ignore failures"))
+-
+-function keepalive_failure.cfgvalue(self, section)
+-	local v = m:get(section, "keepalive")
+-	if v and #v > 0 then
+-		return tonumber(v:match("^(%d+)[ ,]+%d+") or v)
+-	end
+-end
+-
+-function keepalive_failure.write() end
+-function keepalive_failure.remove() end
+-
+-keepalive_failure.placeholder = "0"
+-keepalive_failure.datatype    = "uinteger"
+-
+-
+-keepalive_interval = section:taboption("advanced", Value, "_keepalive_interval",
+-	translate("LCP echo interval"),
+-	translate("Send LCP echo requests at the given interval in seconds, only effective in conjunction with failure threshold"))
+-
+-function keepalive_interval.cfgvalue(self, section)
+-	local v = m:get(section, "keepalive")
+-	if v and #v > 0 then
+-		return tonumber(v:match("^%d+[ ,]+(%d+)"))
+-	end
+-end
+-
+-function keepalive_interval.write(self, section, value)
+-	local f = tonumber(keepalive_failure:formvalue(section)) or 0
+-	local i = tonumber(value) or 5
+-	if i < 1 then i = 1 end
+-	if f > 0 then
+-		m:set(section, "keepalive", "%d %d" %{ f, i })
+-	else
+-		m:del(section, "keepalive")
+-	end
+-end
+-
+-keepalive_interval.remove      = keepalive_interval.write
+-keepalive_interval.placeholder = "5"
+-keepalive_interval.datatype    = "min(1)"
+-
+-
+-demand = section:taboption("advanced", Value, "demand",
+-	translate("Inactivity timeout"),
+-	translate("Close inactive connection after the given amount of seconds, use 0 to persist connection"))
+-
+-demand.placeholder = "0"
+-demand.datatype    = "uinteger"
+-
+-
+-mtu = section:taboption("advanced", Value, "mtu", translate("Override MTU"))
+-mtu.placeholder = "1500"
+-mtu.datatype    = "max(9200)"
+diff -aurN openwrt_holl/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_pppoe.lua openwrt_holl.new/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_pppoe.lua
+--- openwrt_holl/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_pppoe.lua	2014-08-20 11:35:41.776734648 +0800
++++ openwrt_holl.new/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_pppoe.lua	2014-08-12 16:18:32.062787477 +0800
+@@ -37,100 +37,3 @@
+ 
+ service.placeholder = translate("auto")
+ 
+-
+-if luci.model.network:has_ipv6() then
+-
+-	ipv6 = section:taboption("advanced", Flag, "ipv6",
+-		translate("Enable IPv6 negotiation on the PPP link"))
+-
+-	ipv6.default = ipv6.disabled
+-
+-end
+-
+-
+-defaultroute = section:taboption("advanced", Flag, "defaultroute",
+-	translate("Use default gateway"),
+-	translate("If unchecked, no default route is configured"))
+-
+-defaultroute.default = defaultroute.enabled
+-
+-
+-metric = section:taboption("advanced", Value, "metric",
+-	translate("Use gateway metric"))
+-
+-metric.placeholder = "0"
+-metric.datatype    = "uinteger"
+-metric:depends("defaultroute", defaultroute.enabled)
+-
+-
+-peerdns = section:taboption("advanced", Flag, "peerdns",
+-	translate("Use DNS servers advertised by peer"),
+-	translate("If unchecked, the advertised DNS server addresses are ignored"))
+-
+-peerdns.default = peerdns.enabled
+-
+-
+-dns = section:taboption("advanced", DynamicList, "dns",
+-	translate("Use custom DNS servers"))
+-
+-dns:depends("peerdns", "")
+-dns.datatype = "ipaddr"
+-dns.cast     = "string"
+-
+-
+-keepalive_failure = section:taboption("advanced", Value, "_keepalive_failure",
+-	translate("LCP echo failure threshold"),
+-	translate("Presume peer to be dead after given amount of LCP echo failures, use 0 to ignore failures"))
+-
+-function keepalive_failure.cfgvalue(self, section)
+-	local v = m:get(section, "keepalive")
+-	if v and #v > 0 then
+-		return tonumber(v:match("^(%d+)[ ,]+%d+") or v)
+-	end
+-end
+-
+-function keepalive_failure.write() end
+-function keepalive_failure.remove() end
+-
+-keepalive_failure.placeholder = "0"
+-keepalive_failure.datatype    = "uinteger"
+-
+-
+-keepalive_interval = section:taboption("advanced", Value, "_keepalive_interval",
+-	translate("LCP echo interval"),
+-	translate("Send LCP echo requests at the given interval in seconds, only effective in conjunction with failure threshold"))
+-
+-function keepalive_interval.cfgvalue(self, section)
+-	local v = m:get(section, "keepalive")
+-	if v and #v > 0 then
+-		return tonumber(v:match("^%d+[ ,]+(%d+)"))
+-	end
+-end
+-
+-function keepalive_interval.write(self, section, value)
+-	local f = tonumber(keepalive_failure:formvalue(section)) or 0
+-	local i = tonumber(value) or 5
+-	if i < 1 then i = 1 end
+-	if f > 0 then
+-		m:set(section, "keepalive", "%d %d" %{ f, i })
+-	else
+-		m:del(section, "keepalive")
+-	end
+-end
+-
+-keepalive_interval.remove      = keepalive_interval.write
+-keepalive_interval.placeholder = "5"
+-keepalive_interval.datatype    = "min(1)"
+-
+-
+-demand = section:taboption("advanced", Value, "demand",
+-	translate("Inactivity timeout"),
+-	translate("Close inactive connection after the given amount of seconds, use 0 to persist connection"))
+-
+-demand.placeholder = "0"
+-demand.datatype    = "uinteger"
+-
+-
+-mtu = section:taboption("advanced", Value, "mtu", translate("Override MTU"))
+-mtu.placeholder = "1500"
+-mtu.datatype    = "max(9200)"
+diff -aurN openwrt_holl/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_pptp.lua openwrt_holl.new/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_pptp.lua
+--- openwrt_holl/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_pptp.lua	2014-08-20 11:35:41.776734648 +0800
++++ openwrt_holl.new/feeds/luci/protocols/ppp/luasrc/model/cbi/admin_network/proto_pptp.lua	2014-08-12 16:20:13.502785434 +0800
+@@ -27,90 +27,3 @@
+ password = section:taboption("general", Value, "password", translate("PAP/CHAP password"))
+ password.password = true
+ 
+-
+-defaultroute = section:taboption("advanced", Flag, "defaultroute",
+-	translate("Use default gateway"),
+-	translate("If unchecked, no default route is configured"))
+-
+-defaultroute.default = defaultroute.enabled
+-
+-
+-metric = section:taboption("advanced", Value, "metric",
+-	translate("Use gateway metric"))
+-
+-metric.placeholder = "0"
+-metric.datatype    = "uinteger"
+-metric:depends("defaultroute", defaultroute.enabled)
+-
+-
+-peerdns = section:taboption("advanced", Flag, "peerdns",
+-	translate("Use DNS servers advertised by peer"),
+-	translate("If unchecked, the advertised DNS server addresses are ignored"))
+-
+-peerdns.default = peerdns.enabled
+-
+-
+-dns = section:taboption("advanced", DynamicList, "dns",
+-	translate("Use custom DNS servers"))
+-
+-dns:depends("peerdns", "")
+-dns.datatype = "ipaddr"
+-dns.cast     = "string"
+-
+-
+-keepalive_failure = section:taboption("advanced", Value, "_keepalive_failure",
+-	translate("LCP echo failure threshold"),
+-	translate("Presume peer to be dead after given amount of LCP echo failures, use 0 to ignore failures"))
+-
+-function keepalive_failure.cfgvalue(self, section)
+-	local v = m:get(section, "keepalive")
+-	if v and #v > 0 then
+-		return tonumber(v:match("^(%d+)[ ,]+%d+") or v)
+-	end
+-end
+-
+-function keepalive_failure.write() end
+-function keepalive_failure.remove() end
+-
+-keepalive_failure.placeholder = "0"
+-keepalive_failure.datatype    = "uinteger"
+-
+-
+-keepalive_interval = section:taboption("advanced", Value, "_keepalive_interval",
+-	translate("LCP echo interval"),
+-	translate("Send LCP echo requests at the given interval in seconds, only effective in conjunction with failure threshold"))
+-
+-function keepalive_interval.cfgvalue(self, section)
+-	local v = m:get(section, "keepalive")
+-	if v and #v > 0 then
+-		return tonumber(v:match("^%d+[ ,]+(%d+)"))
+-	end
+-end
+-
+-function keepalive_interval.write(self, section, value)
+-	local f = tonumber(keepalive_failure:formvalue(section)) or 0
+-	local i = tonumber(value) or 5
+-	if i < 1 then i = 1 end
+-	if f > 0 then
+-		m:set(section, "keepalive", "%d %d" %{ f, i })
+-	else
+-		m:del(section, "keepalive")
+-	end
+-end
+-
+-keepalive_interval.remove      = keepalive_interval.write
+-keepalive_interval.placeholder = "5"
+-keepalive_interval.datatype    = "min(1)"
+-
+-
+-demand = section:taboption("advanced", Value, "demand",
+-	translate("Inactivity timeout"),
+-	translate("Close inactive connection after the given amount of seconds, use 0 to persist connection"))
+-
+-demand.placeholder = "0"
+-demand.datatype    = "uinteger"
+-
+-
+-mtu = section:taboption("advanced", Value, "mtu", translate("Override MTU"))
+-mtu.placeholder = "1500"
+-mtu.datatype    = "max(9200)"

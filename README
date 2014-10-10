@@ -1,0 +1,7 @@
+0xx	platform patches
+1xx	kernel patches
+2xx	shell file patches
+3xx	config file patches
+4xx	secure patches
+5xx	application
+6xx	luci patches
